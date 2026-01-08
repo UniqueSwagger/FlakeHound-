@@ -13,21 +13,21 @@ struct RunResult {
 
 class TestRunner {
  public:
-  TestRunner(const string& executable);
+  TestRunner(string& executable);
   ~TestRunner();
 
   vector<RunResult> runMultipleTimes(int times);
 
   vector<RunResult> runWithVariations(int times);
 
-  map<string, int> getExecutionStats() const;
+  map<string, int> getExecutionStats();
 
  private:
   string executable_;
   vector<RunResult> results_;
 
   // helper methods
-  bool executeTest(const string& outFile);
+  bool executeTest(string& outFile);
   void applyEnvironmentVariation(int runnumber);
 };
 
