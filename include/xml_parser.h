@@ -4,21 +4,21 @@
 #include <map>
 #include <string>
 #include <vector>
-
+using namespace std;
 struct TestResult {
-  std::string name;
-  std::string status;  // "passed", "failed", "skipped"
+  string name;
+  string status;  // "passed", "failed", "skipped"
   double time;
-  std::string message;
+  string message;
 };
 
 struct TestSuite {
-  std::string name;
+  string name;
   int tests;
   int failures;
   int errors;
   double time;
-  std::vector<TestResult> testResults;
+  vector<TestResult> testResults;
 };
 
 class XMLParser {
@@ -26,18 +26,18 @@ class XMLParser {
   XMLParser();
   ~XMLParser();
 
-  bool parseGoogleTestXML(std::string filename);
+  bool parseGoogleTestXML(string filename);
 
-  std::vector<TestSuite> getTestSuites();
+  vector<TestSuite> getTestSuites();
 
-  std::vector<TestResult> getAllTests();
+  vector<TestResult> getAllTests();
 
  private:
-  std::vector<TestSuite> testSuites;
+  vector<TestSuite> testSuites;
 
   // Helper functions
-  std::string extractAttribute(std::string line, std::string attrName);
-  std::string extractTagContent(std::string xml, std::string tagName);
+  string extractAttribute(string line, string attrName);
+  string extractTagContent(string xml, string tagName);
 };
 
 #endif
