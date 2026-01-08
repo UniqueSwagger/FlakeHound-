@@ -26,7 +26,7 @@ class XMLParser {
   XMLParser();
   ~XMLParser();
 
-  bool parseGoogleTestXML(string filename);
+  bool parseGoogleTestXML(string& filename);
 
   vector<TestSuite> getTestSuites();
 
