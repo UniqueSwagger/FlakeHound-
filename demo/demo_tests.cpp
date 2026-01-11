@@ -31,8 +31,9 @@ bool test_string_length() {
 }
 
 bool test_random_number() {
-  int random_value = rand() % 100;
-  if (random_value > 50) {
+  int random_value = rand() % 10;
+
+  if (random_value >= 5) {
     cout << "PASS: test_random_number (got " << random_value << ")\n";
     return true;
   } else {
@@ -43,7 +44,8 @@ bool test_random_number() {
 
 bool test_timing_based() {
   int current_time = time(nullptr) % 10;
-  if (current_time > 4) {
+
+  if (current_time >= 5) {
     cout << "PASS: test_timing_based (time mod = " << current_time << ")\n";
     return true;
   } else {

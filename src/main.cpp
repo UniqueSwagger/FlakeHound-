@@ -1,5 +1,3 @@
-// new code: main program with test runner integration
-
 #include <iostream>
 #include <map>
 #include <string>
@@ -28,21 +26,31 @@ int main() {
 
   for (auto& result : results) {
     string output = result.output;
-    if (output.find("test_addition") != string::npos &&
-        output.find("PASS") != string::npos)
-      test1_passes++;
-    if (output.find("test_string_length") != string::npos &&
-        output.find("PASS") != string::npos)
-      test2_passes++;
-    if (output.find("test_random_number") != string::npos &&
-        output.find("PASS") != string::npos)
-      test3_passes++;
-    if (output.find("test_timing_based") != string::npos &&
-        output.find("PASS") != string::npos)
-      test4_passes++;
+
+    size_t pos = 0;
+    while (pos < output.length()) {
+      size_t newline_pos = output.find('\n', pos);
+      if (newline_pos == string::npos) newline_pos = output.length();
+
+      string line = output.substr(pos, newline_pos - pos);
+
+      if (line.find("PASS: test_addition") != string::npos) {
+        test1_passes++;
+      }
+      if (line.find("PASS: test_string_length") != string::npos) {
+        test2_passes++;
+      }
+      if (line.find("PASS: test_random_number") != string::npos) {
+        test3_passes++;
+      }
+      if (line.find("PASS: test_timing_based") != string::npos) {
+        test4_passes++;
+      }
+
+      pos = newline_pos + 1;
+    }
   }
 
-  // new code: show results
   cout << "test_addition: PASSED " << test1_passes << "/10 times (Stability: ";
   if (test1_passes == 10)
     cout << "STABLE)\n";
