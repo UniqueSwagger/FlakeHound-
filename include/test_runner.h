@@ -4,31 +4,33 @@
 #include <map>
 #include <string>
 #include <vector>
+
 using namespace std;
+
 struct RunResult {
   int runNumber;
-  string xmlOutput;
-  bool success;
+  string output;
+  int totalTests;
+  int passedTests;
+  int failedTests;
 };
 
 class TestRunner {
  public:
-  TestRunner(string& executable);
+  TestRunner(string exePath);
   ~TestRunner();
 
   vector<RunResult> runMultipleTimes(int times);
 
-  vector<RunResult> runWithVariations(int times);
-
-  map<string, int> getExecutionStats();
+  map<string, int> getStats();
 
  private:
-  string executable_;
-  vector<RunResult> results_;
+  string executable;
+  vector<RunResult> allResults;
 
-  // helper methods
-  bool executeTest(string& outFile);
-  void applyEnvironmentVariation(int runnumber);
+  RunResult runOnce(int runNumber);
+
+  void parseOutput(RunResult& result);
 };
 
-#endif  // !TEST_RUNNER_H
+#endif
