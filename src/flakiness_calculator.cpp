@@ -28,14 +28,19 @@ FlakinessScore FlakinessCalculator::calculateFlakiness(
   }
 
   if (score.totalRuns > 0) {
-    double failureRate = (double)score.failures / score.totalRuns;
-    score.coefficient = 1.0 - abs(2.0 * failureRate - 1.0);
+    double passRate = static_cast<double>(score.passes) / score.totalRuns;
+    double failRate = static_cast<double>(score.failures) / score.totalRuns;
+    double minRate = min(passRate, failRate);
+    // coefficient near 0 means always passing or always failing; near 1 means
+    // 50/50
+    score.coefficient = 2.0 * minRate;
   } else {
     score.coefficient = 0.0;
   }
   score.wilsonScore = computeWilsonScore(score.passes, score.totalRuns);
 
-  score.category = categorizeFlakiness(score.coefficient);
+  score.category =
+      categorizeFlakiness(score.passes, score.failures, score.coefficient);
 
   return score;
 }
@@ -76,12 +81,18 @@ double FlakinessCalculator::computeWilsonScore(int passes, int totalRuns,
   return wilsonScore;
 }
 
-string FlakinessCalculator::categorizeFlakiness(double coefficient) {
-  if (coefficient < 0.1) {
-    return "stable";  // less than 10% flakiness
-  } else if (coefficient < 0.5) {
-    return "mildly_flaky";  // 10-50% flakiness
+string FlakinessCalculator::categorizeFlakiness(int passes, int failures,
+                                                double coefficient) {
+  int total = passes + failures;
+  if (total == 0) return "no_data";
+
+  if (failures == 0) return "stable";        // always passing
+  if (passes == 0) return "always_failing";  // never passing
+
+  // otherwise flaky to some degree
+  if (coefficient < 0.4) {
+    return "mildly_flaky";  // low-but-present flakiness
   } else {
-    return "highly_flaky";  // more than 50% flakiness
+    return "highly_flaky";  // significant flakiness (toward 50/50)
   }
 }

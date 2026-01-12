@@ -27,6 +27,6 @@ class FlakinessCalculator {
 
  private:
   double computeWilsonScore(int passes, int totalRuns, double z = 1.96);
-  string categorizeFlakiness(double wilsonScore);
+  string categorizeFlakiness(int passes, int failures, double coefficient);
 };
 #endif  // !FLAKINESS_CALCULATOR_H
