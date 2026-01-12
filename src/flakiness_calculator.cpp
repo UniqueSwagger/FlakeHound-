@@ -28,11 +28,9 @@ FlakinessScore FlakinessCalculator::calculateFlakiness(
   }
 
   if (score.totalRuns > 0) {
-    double passRate = static_cast<double>(score.passes) / score.totalRuns;
-    double failRate = static_cast<double>(score.failures) / score.totalRuns;
+    double passRate = (double)(score.passes) / score.totalRuns;
+    double failRate = (double)(score.failures) / score.totalRuns;
     double minRate = min(passRate, failRate);
-    // coefficient near 0 means always passing or always failing; near 1 means
-    // 50/50
     score.coefficient = 2.0 * minRate;
   } else {
     score.coefficient = 0.0;
@@ -56,10 +54,9 @@ vector<FlakinessScore> FlakinessCalculator::calculateForAllTests(
     scores.push_back(score);
   }
 
-  sort(scores.begin(), scores.end(),
-       [](const FlakinessScore& a, const FlakinessScore& b) {
-         return a.coefficient > b.coefficient;
-       });
+  sort(scores.begin(), scores.end(), [](FlakinessScore& a, FlakinessScore& b) {
+    return a.coefficient > b.coefficient;
+  });
 
   return scores;
 }
@@ -77,7 +74,8 @@ double FlakinessCalculator::computeWilsonScore(int passes, int totalRuns,
   double sqrtTerm = sqrt((p * (1 - p) / n) + (z * z) / (4 * n * n));
 
   double wilsonScore = (numerator - z * sqrtTerm) / denominator;
-
+  if (wilsonScore < 0.0) wilsonScore = 0.0;
+  if (wilsonScore > 1.0) wilsonScore = 1.0;
   return wilsonScore;
 }
 
@@ -86,13 +84,12 @@ string FlakinessCalculator::categorizeFlakiness(int passes, int failures,
   int total = passes + failures;
   if (total == 0) return "no_data";
 
-  if (failures == 0) return "stable";        // always passing
-  if (passes == 0) return "always_failing";  // never passing
+  if (failures == 0) return "stable";
+  if (passes == 0) return "always_failing";
 
-  // otherwise flaky to some degree
   if (coefficient < 0.4) {
-    return "mildly_flaky";  // low-but-present flakiness
+    return "mildly_flaky";
   } else {
-    return "highly_flaky";  // significant flakiness (toward 50/50)
+    return "highly_flaky";
   }
 }
