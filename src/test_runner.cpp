@@ -54,11 +54,9 @@ RunResult TestRunner::runOnce(int runNumber) {
   return result;
 }
 
-// new code: parse output to extract test results
 void TestRunner::parseOutput(RunResult& result) {
   string output = result.output;
 
-  // new code: count occurrences of PASS and FAIL
   size_t pos = 0;
   while ((pos = output.find("PASS:", pos)) != string::npos) {
     result.passedTests++;
@@ -74,7 +72,6 @@ void TestRunner::parseOutput(RunResult& result) {
   result.totalTests = result.passedTests + result.failedTests;
 }
 
-// new code: get overall statistics
 map<string, int> TestRunner::getStats() {
   map<string, int> stats;
 
