@@ -17,7 +17,6 @@ void ReportGenerator::generateReport(string filename,
                                      vector<FlakinessScore>& scores) {
   string report = generateTextReport(scores);
 
-  // ensure output directory exists so report creation doesn't fail
   std::filesystem::path outPath(filename);
   if (!outPath.parent_path().empty()) {
     std::filesystem::create_directories(outPath.parent_path());

@@ -13,7 +13,7 @@ using namespace std;
 int main() {
   cout << "FlakeHound++ - Test Runner Demo\n";
 
-  TestRunner runner(".\\demo\\demo_tests.exe");
+  TestRunner runner(".\\bin\\demo_tests.exe");
   vector<RunResult> results = runner.runMultipleTimes(10);
   map<string, int> stats = runner.getStats();
 
