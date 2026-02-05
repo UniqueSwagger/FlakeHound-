@@ -44,11 +44,11 @@ bool XMLParser::parseGoogleTestXML(string& filename) {
       size_t testTagEnd = suiteBody.find('>', testPos);
       if (testTagEnd == string::npos) break;
 
-      size_t testClose = suiteBody.find("</testcase>", testTagEnd);
-      size_t selfClose = suiteBody.find("/>", testTagEnd);
+      size_t testClose = suiteBody.find("</testcase>", testPos);
+      size_t selfClose = suiteBody.find("/>", testPos);
 
       bool isSelfClosing =
-          (selfClose != string::npos &&
+          (selfClose != string::npos && selfClose < testTagEnd &&
            (testClose == string::npos || selfClose < testClose));
 
       string testTag = suiteBody.substr(testPos, testTagEnd - testPos + 1);

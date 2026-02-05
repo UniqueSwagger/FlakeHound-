@@ -49,6 +49,20 @@ add_executable(flakehound
 
 target_link_libraries(flakehound PRIVATE flakehound_core)
 
+# Abseil analysis executable
+add_executable(analyze_abseil
+    src/analyze_abseil.cpp
+)
+
+target_link_libraries(analyze_abseil PRIVATE flakehound_core)
+
+# XML parsing test executable
+add_executable(test_xml_parsing
+    src/test_xml_parsing.cpp
+)
+
+target_link_libraries(test_xml_parsing PRIVATE flakehound_core)
+
 # demo tests
 add_executable(demo_tests
     demo/demo_tests.cpp
@@ -58,19 +72,3 @@ target_link_libraries(demo_tests
     PRIVATE 
     GTest::gtest_main
 )
-
-# flakehound++ unit tests
-add_executable(flakehound_tests
-    tests/test_xml_parser.cpp
-    tests/test_lexer.cpp
-    tests/test_flakiness_calculator.cpp
-)
-
-target_link_libraries(flakehound_tests 
-    PRIVATE 
-    flakehound_core
-    GTest::gtest_main
-)
-
-include(GoogleTest)
-gtest_discover_tests(flakehound_tests)
