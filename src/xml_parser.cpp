@@ -9,7 +9,7 @@ XMLParser::XMLParser() {}
 
 XMLParser::~XMLParser() {}
 
-bool XMLParser::parseGoogleTestXML(string& filename) {
+bool XMLParser::parseGoogleTestXML(const string& filename) {
   testSuites.clear();
 
   ifstream file(filename);
@@ -71,11 +71,13 @@ bool XMLParser::parseGoogleTestXML(string& filename) {
       result.status = "passed";
       result.message = "";
 
-      if (testInner.find("<failure") != string::npos) {
+      if (testInner.find("<failure") != string::npos ||
+          testInner.find("<error") != string::npos) {
         result.status = "failed";
         result.message = extractAttribute(testInner, "message");
       } else if (testInner.find("<skipped") != string::npos) {
         result.status = "skipped";
+        result.message = extractAttribute(testInner, "message");
       }
 
       suite.testResults.push_back(result);
@@ -90,9 +92,9 @@ bool XMLParser::parseGoogleTestXML(string& filename) {
   return !testSuites.empty();
 }
 
-vector<TestSuite> XMLParser::getTestSuites() { return testSuites; }
+vector<TestSuite> XMLParser::getTestSuites() const { return testSuites; }
 
-vector<TestResult> XMLParser::getAllTests() {
+vector<TestResult> XMLParser::getAllTests() const {
   vector<TestResult> allTests;
   for (auto& suite : testSuites) {
     allTests.insert(allTests.end(), suite.testResults.begin(),
@@ -101,7 +103,8 @@ vector<TestResult> XMLParser::getAllTests() {
   return allTests;
 }
 
-string XMLParser::extractAttribute(string line, string attrName) {
+string XMLParser::extractAttribute(const string& line,
+                                   const string& attrName) const {
   string pattern = attrName + "=\"";
   size_t start = line.find(pattern);
   if (start == string::npos) return "";
@@ -111,7 +114,8 @@ string XMLParser::extractAttribute(string line, string attrName) {
   return line.substr(start, end - start);
 }
 
-string XMLParser::extractTagContent(string xml, string tagName) {
+string XMLParser::extractTagContent(const string& xml,
+                                    const string& tagName) const {
   string openTag = "<" + tagName + ">";
   string closeTag = "</" + tagName + ">";
   size_t start = xml.find(openTag);

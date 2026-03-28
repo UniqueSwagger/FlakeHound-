@@ -26,18 +26,18 @@ class XMLParser {
   XMLParser();
   ~XMLParser();
 
-  bool parseGoogleTestXML(string& filename);
+  bool parseGoogleTestXML(const string& filename);
 
-  vector<TestSuite> getTestSuites();
+  vector<TestSuite> getTestSuites() const;
 
-  vector<TestResult> getAllTests();
+  vector<TestResult> getAllTests() const;
 
  private:
   vector<TestSuite> testSuites;
 
   // Helper functions
-  string extractAttribute(string line, string attrName);
-  string extractTagContent(string xml, string tagName);
+  string extractAttribute(const string& line, const string& attrName) const;
+  string extractTagContent(const string& xml, const string& tagName) const;
 };
 
 #endif
