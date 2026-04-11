@@ -1,5 +1,7 @@
 # Build directories
 build/
+build-*/
+build-linux/
 cmake-build-*/
 out/
 abseil-cpp/

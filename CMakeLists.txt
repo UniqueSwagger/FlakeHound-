@@ -14,17 +14,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-# google test setup
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG release-1.12.1
-)
-# for windows platforms
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
 enable_testing()
 
 # flakehound++ library
@@ -74,7 +63,21 @@ add_executable(demo_tests
     demo/demo_tests.cpp
 )
 
-target_link_libraries(demo_tests 
-    PRIVATE 
-    GTest::gtest_main
+add_test(NAME ast_builder_smoke COMMAND test_ast_builder)
+set_tests_properties(ast_builder_smoke PROPERTIES
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+add_test(NAME xml_parser_smoke
+    COMMAND test_xml_parsing ${PROJECT_SOURCE_DIR}/demo/sample_gtest_results.xml
+)
+set_tests_properties(xml_parser_smoke PROPERTIES
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+add_test(NAME flakehound_end_to_end
+    COMMAND flakehound $<TARGET_FILE:demo_tests> 3
+)
+set_tests_properties(flakehound_end_to_end PROPERTIES
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )

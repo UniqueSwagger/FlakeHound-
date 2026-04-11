@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <map>
@@ -7,105 +8,161 @@
 
 #include "flakliness_calculator.h"
 #include "report_generator.h"
-#include "test_runner.h"
 #include "xml_parser.h"
 
 using namespace std;
 
-void runTestsAndGenerateXML(string testExe, string xmlPrefix, int runs) {
+namespace {
+
+string quotePath(const filesystem::path& path) {
+  return "\"" + path.string() + "\"";
+}
+
+string nullDevice() {
+#ifdef _WIN32
+  return "nul";
+#else
+  return "/dev/null";
+#endif
+}
+
+filesystem::path findAbseilDirectory(int argc, char* argv[]) {
+  vector<filesystem::path> candidates;
+
+  if (argc >= 2) {
+    candidates.push_back(argv[1]);
+  }
+
+  candidates.push_back("abseil-cpp");
+  candidates.push_back(filesystem::path("..") / "abseil-cpp");
+  candidates.push_back(filesystem::path("..") / ".." / "abseil-cpp");
+
+  for (const filesystem::path& candidate : candidates) {
+    filesystem::path absolutePath = filesystem::absolute(candidate);
+    if (filesystem::is_directory(absolutePath)) {
+      return absolutePath;
+    }
+  }
+
+  return {};
+}
+
+int parseRuns(int argc, char* argv[]) {
+  if (argc >= 3) {
+    int requestedRuns = atoi(argv[2]);
+    if (requestedRuns > 0) {
+      return requestedRuns;
+    }
+  }
+
+  return 20;
+}
+
+bool hasXmlSet(const filesystem::path& dir, const string& prefix, int runs) {
   for (int i = 1; i <= runs; i++) {
-    string xmlFile = xmlPrefix + to_string(i) + ".xml";
-    string command = testExe + " --gtest_output=xml:" + xmlFile + " > nul 2>&1";
+    if (!filesystem::exists(dir / (prefix + to_string(i) + ".xml"))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void runTestsAndGenerateXML(const filesystem::path& testExe,
+                            const filesystem::path& outputDir,
+                            const string& prefix, int runs) {
+  for (int i = 1; i <= runs; i++) {
+    filesystem::path xmlFile = outputDir / (prefix + to_string(i) + ".xml");
+    string command = quotePath(testExe) + " --gtest_output=xml:" +
+                     quotePath(xmlFile) + " > " + nullDevice() + " 2>&1";
     cout << "  Test run #" << i << "/" << runs << "...\r" << flush;
     system(command.c_str());
   }
   cout << "  Completed " << runs << " runs!\n";
 }
 
-int main() {
+void loadXmlResults(const filesystem::path& dir, const string& prefix, int runs,
+                    const string& label,
+                    map<string, vector<bool>>& testResults) {
+  cout << "\n[" << label << "]\n";
+
+  for (int i = 1; i <= runs; i++) {
+    filesystem::path xmlFile = dir / (prefix + to_string(i) + ".xml");
+    XMLParser parser;
+
+    if (parser.parseGoogleTestXML(xmlFile.string())) {
+      cout << "  Parsed run #" << i << "\n";
+
+      vector<TestSuite> suites = parser.getTestSuites();
+      for (const TestSuite& suite : suites) {
+        for (const TestResult& test : suite.testResults) {
+          string fullTestName = suite.name + "." + test.name;
+          testResults[fullTestName].push_back(test.status == "passed");
+        }
+      }
+    } else {
+      cout << "  Warning: Could not parse " << label << " run #" << i << "\n";
+    }
+  }
+}
+
+}  // namespace
+
+int main(int argc, char* argv[]) {
   cout << "FlakeHound++ - Abseil Test Analysis\n\n";
 
-  string xml_dir = "C:\\Users\\srahm\\Documents\\FlakeHound++\\abseil-cpp\\";
+  filesystem::path abseilDir = findAbseilDirectory(argc, argv);
+  if (abseilDir.empty()) {
+    cerr << "Error: could not find the abseil-cpp directory.\n";
+    cerr << "Pass the path as the first argument if needed.\n";
+    return 1;
+  }
 
-  cout << "Step 1: Running tests and generating XMLs...\n";
+  int runs = parseRuns(argc, argv);
+  filesystem::path repoRoot = abseilDir.parent_path();
 
-  cout << "[ASCII Tests - 20 runs]\n";
-  runTestsAndGenerateXML(xml_dir + "absl_ascii_test.exe", xml_dir + "run_", 20);
+  filesystem::path asciiExe = abseilDir / "absl_ascii_test.exe";
+  filesystem::path bernoulliExe = abseilDir / "absl_bernoulli_test.exe";
 
-  cout << "\n[Bernoulli Tests - 20 runs]\n";
-  runTestsAndGenerateXML(xml_dir + "absl_bernoulli_test.exe",
-                         xml_dir + "bernoulli_run_", 20);
+  bool haveAsciiXml = hasXmlSet(abseilDir, "run_", runs);
+  bool haveBernoulliXml = hasXmlSet(abseilDir, "bernoulli_run_", runs);
+
+  cout << "Step 1: Preparing XML inputs...\n";
+  if (haveAsciiXml && haveBernoulliXml) {
+    cout << "Using existing XML files in " << abseilDir.string() << "\n";
+  } else if (filesystem::exists(asciiExe) && filesystem::exists(bernoulliExe)) {
+    cout << "[ASCII Tests - " << runs << " runs]\n";
+    runTestsAndGenerateXML(asciiExe, abseilDir, "run_", runs);
+
+    cout << "\n[Bernoulli Tests - " << runs << " runs]\n";
+    runTestsAndGenerateXML(bernoulliExe, abseilDir, "bernoulli_run_", runs);
+  } else {
+    cerr << "Error: missing both reusable XML files and runnable Abseil test "
+            "executables.\n";
+    return 1;
+  }
 
   cout << "\nStep 2: Parsing and analyzing XMLs...\n";
 
   map<string, vector<bool>> testResults;
-
-  cout << "\n[ASCII Tests]\n";
-  for (int i = 1; i <= 20; i++) {
-    string xmlFile = xml_dir + "run_" + to_string(i) + ".xml";
-    XMLParser parser;
-
-    if (parser.parseGoogleTestXML(xmlFile)) {
-      cout << "  Parsed run #" << i << "\n";
-
-      vector<TestSuite> suites = parser.getTestSuites();
-      for (auto& suite : suites) {
-        for (auto& test : suite.testResults) {
-          string fullTestName = suite.name + "." + test.name;
-          bool passed = (test.status == "passed");
-          testResults[fullTestName].push_back(passed);
-        }
-      }
-    } else {
-      cout << "  Warning: Could not parse ASCII run #" << i << "\n";
-    }
-  }
-
-  cout << "\n[Bernoulli Tests]\n";
-  for (int i = 1; i <= 20; i++) {
-    string xmlFile = xml_dir + "bernoulli_run_" + to_string(i) + ".xml";
-    XMLParser parser;
-
-    if (parser.parseGoogleTestXML(xmlFile)) {
-      cout << "  Parsed run #" << i << "\n";
-
-      vector<TestSuite> suites = parser.getTestSuites();
-      for (auto& suite : suites) {
-        for (auto& test : suite.testResults) {
-          string fullTestName = suite.name + "." + test.name;
-          bool passed = (test.status == "passed");
-          testResults[fullTestName].push_back(passed);
-        }
-      }
-    } else {
-      cout << "  Warning: Could not parse Bernoulli run #" << i << "\n";
-    }
-  }
+  loadXmlResults(abseilDir, "run_", runs, "ASCII Tests", testResults);
+  loadXmlResults(abseilDir, "bernoulli_run_", runs, "Bernoulli Tests",
+                 testResults);
 
   cout << "\nAnalyzing " << testResults.size() << " unique tests...\n\n";
 
   FlakinessCalculator calculator;
-  vector<FlakinessScore> scores;
-
-  for (auto& entry : testResults) {
-    string testName = entry.first;
-    vector<bool> results = entry.second;
-    FlakinessScore score = calculator.calculateFlakiness(testName, results);
-    scores.push_back(score);
-  }
-
-  sort(scores.begin(), scores.end(), [](FlakinessScore& a, FlakinessScore& b) {
-    return a.coefficient > b.coefficient;
-  });
+  vector<FlakinessScore> scores =
+      calculator.calculateForAllTests(testResults);
 
   cout << "Flakiness Summary:\n";
-  for (auto& score : scores) {
+  for (const FlakinessScore& score : scores) {
     cout << "  " << score.testName << ": " << score.passes << "/"
          << score.totalRuns << " (" << score.category << ")\n";
   }
 
   ReportGenerator reporter;
-  reporter.generateReport("..\\reports\\abseil_flakiness_report.txt", scores);
+  reporter.generateReport(
+      (repoRoot / "reports" / "abseil_flakiness_report.txt").string(), scores);
 
   cout << "\nAbseil Analysis Complete!\n";
 

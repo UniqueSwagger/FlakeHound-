@@ -34,7 +34,7 @@ RunResult TestRunner::runOnce(int runNumber) {
   result.failedTests = 0;
 
   string tempFile = "temp_run_" + to_string(runNumber) + ".txt";
-  string command = executable + " > " + tempFile + " 2>&1";
+  string command = executable + " > \"" + tempFile + "\" 2>&1";
 
   system(command.c_str());
 

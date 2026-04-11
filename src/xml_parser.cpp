@@ -23,6 +23,13 @@ bool XMLParser::parseGoogleTestXML(const string& filename) {
 
   size_t pos = 0;
   while ((pos = xml.find("<testsuite", pos)) != string::npos) {
+    char nextChar = (pos + 10 < xml.size()) ? xml[pos + 10] : '\0';
+    if (nextChar != ' ' && nextChar != '>' && nextChar != '\t' &&
+        nextChar != '\n' && nextChar != '\r') {
+      pos += 10;
+      continue;
+    }
+
     size_t suiteEnd = xml.find("</testsuite>", pos);
     if (suiteEnd == string::npos) break;
 
