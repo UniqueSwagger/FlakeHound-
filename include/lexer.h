@@ -26,8 +26,20 @@ using namespace std;
 #define TOKEN_MINUS 19
 #define TOKEN_MULTIPLY 20
 #define TOKEN_DIVIDE 21
-#define TOKEN_EOF 22
-#define TOKEN_UNKNOWN 23
+#define TOKEN_MODULO 22
+#define TOKEN_EQUAL 23
+#define TOKEN_NOT_EQUAL 24
+#define TOKEN_LESS 25
+#define TOKEN_LESS_EQUAL 26
+#define TOKEN_GREATER 27
+#define TOKEN_GREATER_EQUAL 28
+#define TOKEN_NOT 29
+#define TOKEN_AND 30
+#define TOKEN_OR 31
+#define TOKEN_INCREMENT 32
+#define TOKEN_DECREMENT 33
+#define TOKEN_EOF 34
+#define TOKEN_UNKNOWN 35
 
 struct Token {
   int type;

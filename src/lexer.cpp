@@ -44,6 +44,13 @@ Token Lexer::nextToken() {
     return readNumber();
   }
 
+  if (ch == '#') {
+    while (hasMoreTokens() && currentChar() != '\n') {
+      advance();
+    }
+    return nextToken();
+  }
+
   if (ch == '/' && position + 1 < static_cast<int>(source.size())) {
     char next = source[position + 1];
     if (next == '/') {
@@ -80,6 +87,66 @@ Token Lexer::nextToken() {
       advance();
     }
     return token;
+  }
+
+  if (position + 1 < static_cast<int>(source.size())) {
+    char next = source[position + 1];
+    if (ch == '=' && next == '=') {
+      token.type = TOKEN_EQUAL;
+      token.value = "==";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '!' && next == '=') {
+      token.type = TOKEN_NOT_EQUAL;
+      token.value = "!=";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '<' && next == '=') {
+      token.type = TOKEN_LESS_EQUAL;
+      token.value = "<=";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '>' && next == '=') {
+      token.type = TOKEN_GREATER_EQUAL;
+      token.value = ">=";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '&' && next == '&') {
+      token.type = TOKEN_AND;
+      token.value = "&&";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '|' && next == '|') {
+      token.type = TOKEN_OR;
+      token.value = "||";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '+' && next == '+') {
+      token.type = TOKEN_INCREMENT;
+      token.value = "++";
+      advance();
+      advance();
+      return token;
+    }
+    if (ch == '-' && next == '-') {
+      token.type = TOKEN_DECREMENT;
+      token.value = "--";
+      advance();
+      advance();
+      return token;
+    }
   }
 
   switch (ch) {
@@ -136,6 +203,26 @@ Token Lexer::nextToken() {
     case '/':
       token.type = TOKEN_DIVIDE;
       token.value = "/";
+      advance();
+      return token;
+    case '%':
+      token.type = TOKEN_MODULO;
+      token.value = "%";
+      advance();
+      return token;
+    case '<':
+      token.type = TOKEN_LESS;
+      token.value = "<";
+      advance();
+      return token;
+    case '>':
+      token.type = TOKEN_GREATER;
+      token.value = ">";
+      advance();
+      return token;
+    case '!':
+      token.type = TOKEN_NOT;
+      token.value = "!";
       advance();
       return token;
     default:

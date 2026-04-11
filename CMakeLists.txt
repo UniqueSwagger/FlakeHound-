@@ -63,6 +63,12 @@ add_executable(test_xml_parsing
 
 target_link_libraries(test_xml_parsing PRIVATE flakehound_core)
 
+add_executable(test_ast_builder
+    src/test_ast_builder.cpp
+)
+
+target_link_libraries(test_ast_builder PRIVATE flakehound_core)
+
 # demo tests
 add_executable(demo_tests
     demo/demo_tests.cpp

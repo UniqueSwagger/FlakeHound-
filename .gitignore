@@ -3,7 +3,7 @@ build/
 cmake-build-*/
 out/
 abseil-cpp/
-
+/.codex
 # Compiled files
 *.o
 *.obj
