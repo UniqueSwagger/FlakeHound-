@@ -7,19 +7,14 @@
 
 using namespace std;
 
-namespace {
-
 vector<double> buildRankingFeatures(const FlakinessScore& score) {
   double failRate =
-      score.totalRuns > 0 ? static_cast<double>(score.failures) / score.totalRuns
-                          : 0.0;
-  double runCoverage = min(1.0, static_cast<double>(score.totalRuns) / 10.0);
+      score.totalRuns > 0 ? (double)(score.failures) / score.totalRuns : 0.0;
+  double runCoverage = min(1.0, (double)(score.totalRuns) / 10.0);
 
   return {score.coefficient, score.transitionRate, failRate,
           1.0 - score.wilsonScore, score.staticRiskScore * 0.25, runCoverage};
 }
-
-}  // namespace
 
 FlakinessCalculator::FlakinessCalculator() : rankingModelReady(false) {
   initializeRankingModel();
@@ -32,7 +27,7 @@ FlakinessScore FlakinessCalculator::calculateFlakiness(
     double staticRiskScore, const vector<string>& likelyCauses) {
   FlakinessScore score;
   score.testName = testName;
-  score.totalRuns = static_cast<int>(testResults.size());
+  score.totalRuns = (int)(testResults.size());
   score.passes = 0;
   score.failures = 0;
   score.transitions = countTransitions(testResults);
@@ -50,8 +45,8 @@ FlakinessScore FlakinessCalculator::calculateFlakiness(
   }
 
   if (score.totalRuns > 0) {
-    double passRate = static_cast<double>(score.passes) / score.totalRuns;
-    double failRate = static_cast<double>(score.failures) / score.totalRuns;
+    double passRate = (double)(score.passes) / score.totalRuns;
+    double failRate = (double)(score.failures) / score.totalRuns;
     score.coefficient = 2.0 * min(passRate, failRate);
   } else {
     score.coefficient = 0.0;
@@ -134,7 +129,7 @@ double FlakinessCalculator::computeWilsonScore(int passes, int totalRuns,
     return 0.0;
   }
 
-  double p = static_cast<double>(passes) / totalRuns;
+  double p = (double)(passes) / totalRuns;
   double n = totalRuns;
 
   double numerator = p + (z * z) / (2 * n);
@@ -171,7 +166,7 @@ double FlakinessCalculator::computeTransitionRate(int transitions,
     return 0.0;
   }
 
-  return static_cast<double>(transitions) / (totalRuns - 1);
+  return (double)(transitions) / (totalRuns - 1);
 }
 
 double FlakinessCalculator::predictRankingScore(

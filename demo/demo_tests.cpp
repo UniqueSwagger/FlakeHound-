@@ -32,7 +32,7 @@ bool test_string_length() {
 }
 
 bool test_random_number() {
-  unsigned seed = static_cast<unsigned>(
+  unsigned seed = (unsigned)(
       chrono::steady_clock::now().time_since_epoch().count());
   srand(seed);
   int random_value = rand() % 10;
@@ -47,7 +47,7 @@ bool test_random_number() {
 }
 
 bool test_timing_based() {
-  int current_time = static_cast<int>(
+  int current_time = (int)(
       chrono::high_resolution_clock::now().time_since_epoch().count() % 10);
 
   if (current_time >= 5) {

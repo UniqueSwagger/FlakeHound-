@@ -8,15 +8,11 @@
 
 using namespace std;
 
-namespace {
-
 string defaultReportPath(const filesystem::path& sourceFile) {
   filesystem::path outputDir = "reports";
   string stem = sourceFile.stem().string();
   return (outputDir / (stem + "_static_analysis.txt")).string();
 }
-
-}  // namespace
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {

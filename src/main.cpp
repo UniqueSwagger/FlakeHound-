@@ -18,8 +18,6 @@
 
 using namespace std;
 
-namespace {
-
 struct CliOptions {
   filesystem::path requestedExecutable;
   filesystem::path requestedSource;
@@ -48,7 +46,7 @@ bool startsWith(const string& value, const string& prefix) {
 
 string toLowerCopy(string value) {
   transform(value.begin(), value.end(), value.begin(),
-            [](unsigned char c) { return static_cast<char>(tolower(c)); });
+            [](unsigned char c) { return (char)(tolower(c)); });
   return value;
 }
 
@@ -156,7 +154,7 @@ string readFile(const filesystem::path& filePath) {
 }
 
 bool isIdentifierChar(char c) {
-  return isalnum(static_cast<unsigned char>(c)) || c == '_';
+  return isalnum((unsigned char)(c)) || c == '_';
 }
 
 string extractFunctionSource(const string& source, const string& functionName) {
@@ -389,7 +387,7 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
     report += line.str();
   }
   report += "\nStatic Findings: " +
-            to_string(static_cast<int>(staticContext.fileReport.findings.size())) +
+            to_string((int)(staticContext.fileReport.findings.size())) +
             "\n";
 
   vector<string> fileCauses = collectCauseMessages(staticContext.fileReport);
@@ -421,9 +419,6 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
 
   return report;
 }
-
-}  // namespace
-
 int main(int argc, char* argv[]) {
   cout << "FlakeHound++ - Test Runner Demo\n";
 

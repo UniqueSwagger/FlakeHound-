@@ -6,8 +6,6 @@
 
 using namespace std;
 
-namespace {
-
 filesystem::path findDemoSource(int argc, char* argv[]) {
   if (argc >= 2) {
     filesystem::path requested = filesystem::absolute(argv[1]);
@@ -30,8 +28,6 @@ filesystem::path findDemoSource(int argc, char* argv[]) {
 
   return {};
 }
-
-}  // namespace
 
 int main(int argc, char* argv[]) {
   filesystem::path demoSource = findDemoSource(argc, argv);
