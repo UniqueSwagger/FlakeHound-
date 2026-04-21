@@ -14,6 +14,7 @@ class ReportGenerator {
   ~ReportGenerator();
 
   void generateReport(string filename, vector<FlakinessScore>& scores);
+  void saveTextReport(const string& filename, const string& reportText);
 
   string generateTextReport(vector<FlakinessScore>& scores);
 };

@@ -16,7 +16,11 @@ ReportGenerator::~ReportGenerator() {}
 void ReportGenerator::generateReport(string filename,
                                      vector<FlakinessScore>& scores) {
   string report = generateTextReport(scores);
+  saveTextReport(filename, report);
+}
 
+void ReportGenerator::saveTextReport(const string& filename,
+                                     const string& reportText) {
   std::filesystem::path outPath(filename);
   if (!outPath.parent_path().empty()) {
     std::filesystem::create_directories(outPath.parent_path());
@@ -24,7 +28,7 @@ void ReportGenerator::generateReport(string filename,
 
   ofstream file(filename);
   if (file.is_open()) {
-    file << report;
+    file << reportText;
     file.close();
     cout << "Report saved to: " << filename << "\n";
   } else {

@@ -21,6 +21,7 @@ add_library(flakehound_core
     src/xml_parser.cpp
     src/test_runner.cpp
     src/flakiness_calculator.cpp
+    src/logistic_regression.cpp
     src/lexer.cpp
     src/ast_builder.cpp
     src/cfg_generator.cpp
@@ -45,6 +46,12 @@ add_executable(analyze_abseil
 
 target_link_libraries(analyze_abseil PRIVATE flakehound_core)
 
+add_executable(analyze_static
+    src/analyze_static.cpp
+)
+
+target_link_libraries(analyze_static PRIVATE flakehound_core)
+
 # XML parsing test executable
 add_executable(test_xml_parsing
     src/test_xml_parsing.cpp
@@ -57,6 +64,12 @@ add_executable(test_ast_builder
 )
 
 target_link_libraries(test_ast_builder PRIVATE flakehound_core)
+
+add_executable(test_static_analyzer
+    src/test_static_analyzer.cpp
+)
+
+target_link_libraries(test_static_analyzer PRIVATE flakehound_core)
 
 # demo tests
 add_executable(demo_tests
@@ -79,5 +92,10 @@ add_test(NAME flakehound_end_to_end
     COMMAND flakehound $<TARGET_FILE:demo_tests> 3
 )
 set_tests_properties(flakehound_end_to_end PROPERTIES
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+add_test(NAME static_analyzer_smoke COMMAND test_static_analyzer)
+set_tests_properties(static_analyzer_smoke PROPERTIES
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
