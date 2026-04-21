@@ -48,12 +48,25 @@ string ReportGenerator::generateTextReport(vector<FlakinessScore>& scores) {
 
     report << (i + 1) << ". " << score.testName << "\n";
     report << "   Status: " << score.category << "\n";
+    report << "   Ranking Score: ";
+    report << fixed << setprecision(4) << score.rankingScore << "\n";
     report << "   Passes: " << score.passes << "/" << score.totalRuns << "\n";
     report << "   Failures: " << score.failures << "\n";
+    report << "   Status Transitions: " << score.transitions << "\n";
+    report << "   Transition Rate: ";
+    report << fixed << setprecision(4) << score.transitionRate << "\n";
     report << "   Flakiness Coefficient: ";
     report << fixed << setprecision(2) << score.coefficient << "\n";
     report << "   Wilson Score (95% confidence): ";
     report << fixed << setprecision(4) << score.wilsonScore << "\n";
+    report << "   Static Pre-run Risk: ";
+    report << fixed << setprecision(4) << score.staticRiskScore << "\n";
+    if (!score.likelyCauses.empty()) {
+      report << "   Likely Causes:\n";
+      for (const string& cause : score.likelyCauses) {
+        report << "      - " << cause << "\n";
+      }
+    }
     report << "\n";
   }
 

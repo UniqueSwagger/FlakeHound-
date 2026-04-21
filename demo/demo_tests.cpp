@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -31,6 +32,9 @@ bool test_string_length() {
 }
 
 bool test_random_number() {
+  unsigned seed = static_cast<unsigned>(
+      chrono::steady_clock::now().time_since_epoch().count());
+  srand(seed);
   int random_value = rand() % 10;
 
   if (random_value >= 5) {
@@ -43,7 +47,8 @@ bool test_random_number() {
 }
 
 bool test_timing_based() {
-  int current_time = time(nullptr) % 10;
+  int current_time = static_cast<int>(
+      chrono::high_resolution_clock::now().time_since_epoch().count() % 10);
 
   if (current_time >= 5) {
     cout << "PASS: test_timing_based (time mod = " << current_time << ")\n";
@@ -55,8 +60,6 @@ bool test_timing_based() {
 }
 
 int main() {
-  srand(time(nullptr));
-
   cout << "FlakeHound++ Demo Tests \n\n";
 
   int passed = 0;

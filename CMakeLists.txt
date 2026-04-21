@@ -71,6 +71,18 @@ add_executable(test_static_analyzer
 
 target_link_libraries(test_static_analyzer PRIVATE flakehound_core)
 
+add_executable(test_flakiness_calculator
+    src/test_flakiness_calculator.cpp
+)
+
+target_link_libraries(test_flakiness_calculator PRIVATE flakehound_core)
+
+add_executable(test_demo_static_analysis
+    src/test_demo_static_analysis.cpp
+)
+
+target_link_libraries(test_demo_static_analysis PRIVATE flakehound_core)
+
 # demo tests
 add_executable(demo_tests
     demo/demo_tests.cpp
@@ -98,5 +110,17 @@ set_tests_properties(flakehound_end_to_end PROPERTIES
 
 add_test(NAME static_analyzer_smoke COMMAND test_static_analyzer)
 set_tests_properties(static_analyzer_smoke PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_test(NAME flakiness_calculator_smoke COMMAND test_flakiness_calculator)
+set_tests_properties(flakiness_calculator_smoke PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_test(NAME demo_static_analysis_smoke
+    COMMAND test_demo_static_analysis ${PROJECT_SOURCE_DIR}/demo/demo_tests.cpp
+)
+set_tests_properties(demo_static_analysis_smoke PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )

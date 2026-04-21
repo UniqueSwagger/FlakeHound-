@@ -235,6 +235,15 @@ ASTNode* ASTBuilder::parseStatement() {
     return parseBlock();
   }
 
+  if (currentToken().type == TOKEN_IDENTIFIER &&
+      currentToken().value == "using") {
+    while (!isAtEnd() && !check(TOKEN_SEMICOLON)) {
+      advance();
+    }
+    match(TOKEN_SEMICOLON);
+    return nullptr;
+  }
+
   if (check(TOKEN_IF)) {
     return parseIfStatement();
   }
