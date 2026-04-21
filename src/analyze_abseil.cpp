@@ -36,6 +36,8 @@ filesystem::path findAbseilDirectory(int argc, char* argv[]) {
   candidates.push_back("abseil-cpp");
   candidates.push_back(filesystem::path("..") / "abseil-cpp");
   candidates.push_back(filesystem::path("..") / ".." / "abseil-cpp");
+  candidates.push_back(filesystem::path(__FILE__).parent_path().parent_path() /
+                       "abseil-cpp");
 
   for (const filesystem::path& candidate : candidates) {
     filesystem::path absolutePath = filesystem::absolute(candidate);
@@ -56,6 +58,14 @@ int parseRuns(int argc, char* argv[]) {
   }
 
   return 20;
+}
+
+filesystem::path reportPath(int argc, char* argv[]) {
+  if (argc >= 4) {
+    return filesystem::absolute(argv[3]);
+  }
+
+  return filesystem::current_path() / "reports" / "abseil_flakiness_report.txt";
 }
 
 bool hasXmlSet(const filesystem::path& dir, const string& prefix, int runs) {
@@ -118,7 +128,6 @@ int main(int argc, char* argv[]) {
   }
 
   int runs = parseRuns(argc, argv);
-  filesystem::path repoRoot = abseilDir.parent_path();
 
   filesystem::path asciiExe = abseilDir / "absl_ascii_test.exe";
   filesystem::path bernoulliExe = abseilDir / "absl_bernoulli_test.exe";
@@ -161,8 +170,7 @@ int main(int argc, char* argv[]) {
   }
 
   ReportGenerator reporter;
-  reporter.generateReport(
-      (repoRoot / "reports" / "abseil_flakiness_report.txt").string(), scores);
+  reporter.generateReport(reportPath(argc, argv).string(), scores);
 
   cout << "\nAbseil Analysis Complete!\n";
 

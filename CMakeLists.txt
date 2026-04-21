@@ -78,24 +78,25 @@ add_executable(demo_tests
 
 add_test(NAME ast_builder_smoke COMMAND test_ast_builder)
 set_tests_properties(ast_builder_smoke PROPERTIES
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
 add_test(NAME xml_parser_smoke
     COMMAND test_xml_parsing ${PROJECT_SOURCE_DIR}/demo/sample_gtest_results.xml
 )
 set_tests_properties(xml_parser_smoke PROPERTIES
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
 add_test(NAME flakehound_end_to_end
     COMMAND flakehound $<TARGET_FILE:demo_tests> 3
+            ${CMAKE_BINARY_DIR}/reports/flakiness_report.txt
 )
 set_tests_properties(flakehound_end_to_end PROPERTIES
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
 add_test(NAME static_analyzer_smoke COMMAND test_static_analyzer)
 set_tests_properties(static_analyzer_smoke PROPERTIES
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )

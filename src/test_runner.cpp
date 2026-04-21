@@ -1,10 +1,59 @@
 #include "test_runner.h"
 
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 
 using namespace std;
+
+namespace {
+
+bool canWriteToDirectory(const filesystem::path& directory) {
+  error_code statusEc;
+  filesystem::create_directories(directory, statusEc);
+  if (!filesystem::exists(directory, statusEc)) {
+    return false;
+  }
+
+  filesystem::path probe =
+      directory / "flakehound_write_probe.tmp";
+  FILE* file = fopen(probe.string().c_str(), "w");
+  if (!file) {
+    return false;
+  }
+
+  fclose(file);
+  remove(probe.string().c_str());
+  return true;
+}
+
+filesystem::path findWritableTempDirectory() {
+  vector<filesystem::path> candidates;
+
+  error_code ec;
+  filesystem::path detectedTemp = filesystem::temp_directory_path(ec);
+  if (!ec && !detectedTemp.empty()) {
+    candidates.push_back(detectedTemp);
+  }
+
+  candidates.push_back("/tmp");
+  candidates.push_back(filesystem::current_path());
+
+  for (const filesystem::path& candidate : candidates) {
+    if (candidate.empty()) {
+      continue;
+    }
+
+    if (canWriteToDirectory(candidate)) {
+      return candidate;
+    }
+  }
+
+  return filesystem::current_path();
+}
+
+}  // namespace
 
 TestRunner::TestRunner(string exePath) : executable(exePath) {}
 
@@ -33,12 +82,15 @@ RunResult TestRunner::runOnce(int runNumber) {
   result.passedTests = 0;
   result.failedTests = 0;
 
-  string tempFile = "temp_run_" + to_string(runNumber) + ".txt";
-  string command = executable + " > \"" + tempFile + "\" 2>&1";
+  filesystem::path tempFile =
+      findWritableTempDirectory() /
+      ("flakehound_temp_run_" + to_string(runNumber) + "_" +
+       to_string(hash<string>{}(executable)) + ".txt");
+  string command = executable + " > \"" + tempFile.string() + "\" 2>&1";
 
   system(command.c_str());
 
-  FILE* file = fopen(tempFile.c_str(), "r");
+  FILE* file = fopen(tempFile.string().c_str(), "r");
   if (file) {
     char buffer[1024];
     while (fgets(buffer, sizeof(buffer), file)) {
@@ -49,7 +101,7 @@ RunResult TestRunner::runOnce(int runNumber) {
 
   parseOutput(result);
 
-  remove(tempFile.c_str());
+  remove(tempFile.string().c_str());
 
   return result;
 }
