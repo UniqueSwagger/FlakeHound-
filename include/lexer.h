@@ -1,10 +1,7 @@
-#ifndef LEXER_H
 #define LEXER_H
-
 #include <string>
 #include <vector>
 using namespace std;
-// Simple token types as integers
 #define TOKEN_INT 1
 #define TOKEN_VOID 2
 #define TOKEN_RETURN 3
@@ -68,5 +65,3 @@ class Lexer {
   Token readIdentifierOrKeyword();
   Token readNumber();
 };
-
-#endif

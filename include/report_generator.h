@@ -1,4 +1,3 @@
-#ifndef REPORT_GENERATOR_H
 #define REPORT_GENERATOR_H
 
 #include <string>
@@ -15,5 +14,3 @@ class ReportGenerator {
 
   string generateTextReport(vector<FlakinessScore>& scores);
 };
-
-#endif

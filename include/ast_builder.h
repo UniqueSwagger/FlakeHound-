@@ -1,4 +1,3 @@
-#ifndef AST_BUILDER_H
 #define AST_BUILDER_H
 
 #include <string>
@@ -93,5 +92,3 @@ class ASTBuilder {
   ASTNode* parsePostfix();
   ASTNode* parsePrimary();
 };
-
-#endif

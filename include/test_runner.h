@@ -1,4 +1,3 @@
-#ifndef TEST_RUNNER_H
 #define TEST_RUNNER_H
 
 #include <map>
@@ -31,5 +30,3 @@ class TestRunner {
 
   void parseOutput(RunResult& result);
 };
-
-#endif

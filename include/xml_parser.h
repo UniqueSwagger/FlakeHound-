@@ -1,4 +1,3 @@
-#ifndef XML_PARSER_H
 #define XML_PARSER_H
 
 #include <map>
@@ -36,5 +35,3 @@ class XMLParser {
   string extractAttribute(const string& line, const string& attrName) const;
   string extractTagContent(const string& xml, const string& tagName) const;
 };
-
-#endif

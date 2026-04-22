@@ -1,6 +1,4 @@
-#ifndef CFG_GENERATOR_H
 #define CFG_GENERATOR_H
-
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -46,5 +44,3 @@ class CFGGenerator {
   int countReachableNodesRecursively(CFGNode* node,
                                      std::unordered_set<int>& visited);
 };
-
-#endif  // CFG_GENERATOR_H
