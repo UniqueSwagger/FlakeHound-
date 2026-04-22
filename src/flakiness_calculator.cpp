@@ -20,8 +20,6 @@ FlakinessCalculator::FlakinessCalculator() : rankingModelReady(false) {
   initializeRankingModel();
 }
 
-FlakinessCalculator::~FlakinessCalculator() {}
-
 FlakinessScore FlakinessCalculator::calculateFlakiness(
     const string& testName, const vector<bool>& testResults,
     double staticRiskScore, const vector<string>& likelyCauses) {

@@ -51,7 +51,6 @@ struct StaticAnalysisReport {
 class StaticAnalyzer {
  public:
   StaticAnalyzer();
-  ~StaticAnalyzer();
 
   StaticAnalysisReport analyzeSourceCode(const string& targetName,
                                          const string& sourceCode);

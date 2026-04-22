@@ -51,7 +51,6 @@ struct Token {
 class Lexer {
  public:
   Lexer(string sourceCode);
-  ~Lexer();
 
   vector<Token> tokenize();
   Token nextToken();

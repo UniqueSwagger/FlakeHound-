@@ -5,10 +5,6 @@
 
 using namespace std;
 
-XMLParser::XMLParser() {}
-
-XMLParser::~XMLParser() {}
-
 bool XMLParser::parseGoogleTestXML(const string& filename) {
   testSuites.clear();
 

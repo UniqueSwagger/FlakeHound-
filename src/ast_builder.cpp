@@ -41,7 +41,7 @@ void ASTBuilder::printAST(ASTNode* node, int indent) {
 }
 
 Token ASTBuilder::currentToken() {
-  if (currentIndex < static_cast<int>(tokens.size())) {
+  if (currentIndex < (int)(tokens.size())) {
     return tokens[currentIndex];
   }
 
@@ -54,7 +54,7 @@ Token ASTBuilder::currentToken() {
 
 Token ASTBuilder::peekToken(int offset) {
   int index = currentIndex + offset;
-  if (index >= 0 && index < static_cast<int>(tokens.size())) {
+  if (index >= 0 && index < (int)(tokens.size())) {
     return tokens[index];
   }
 
@@ -96,7 +96,7 @@ bool ASTBuilder::isFunctionSignature() {
 }
 
 void ASTBuilder::advance() {
-  if (currentIndex < static_cast<int>(tokens.size())) {
+  if (currentIndex < (int)(tokens.size())) {
     currentIndex++;
   }
 }

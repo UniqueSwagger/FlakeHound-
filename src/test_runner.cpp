@@ -26,8 +26,6 @@ string ensureQuotedCommand(const string& commandPath) {
 
 TestRunner::TestRunner(string exePath) : executable(exePath) {}
 
-TestRunner::~TestRunner() {}
-
 vector<RunResult> TestRunner::runMultipleTimes(int times) {
   allResults.clear();
 

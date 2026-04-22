@@ -7,8 +7,6 @@ using namespace std;
 Lexer::Lexer(string sourceCode)
     : source(sourceCode), position(0), line(1), column(1) {}
 
-Lexer::~Lexer() {}
-
 vector<Token> Lexer::tokenize() {
   vector<Token> tokens;
   while (true) {
@@ -36,11 +34,11 @@ Token Lexer::nextToken() {
 
   char ch = currentChar();
 
-  if (isalpha(static_cast<unsigned char>(ch)) || ch == '_') {
+  if (isalpha((unsigned char)(ch)) || ch == '_') {
     return readIdentifierOrKeyword();
   }
 
-  if (isdigit(static_cast<unsigned char>(ch))) {
+  if (isdigit((unsigned char)(ch))) {
     return readNumber();
   }
 
@@ -51,7 +49,7 @@ Token Lexer::nextToken() {
     return nextToken();
   }
 
-  if (ch == '/' && position + 1 < static_cast<int>(source.size())) {
+  if (ch == '/' && position + 1 < (int)(source.size())) {
     char next = source[position + 1];
     if (next == '/') {
       while (hasMoreTokens() && currentChar() != '\n') {
@@ -63,8 +61,7 @@ Token Lexer::nextToken() {
       advance();
       advance();
       while (hasMoreTokens()) {
-        if (currentChar() == '*' &&
-            position + 1 < static_cast<int>(source.size()) &&
+        if (currentChar() == '*' && position + 1 < (int)(source.size()) &&
             source[position + 1] == '/') {
           advance();
           advance();
@@ -89,7 +86,7 @@ Token Lexer::nextToken() {
     return token;
   }
 
-  if (position + 1 < static_cast<int>(source.size())) {
+  if (position + 1 < (int)(source.size())) {
     char next = source[position + 1];
     if (ch == '=' && next == '=') {
       token.type = TOKEN_EQUAL;
@@ -233,9 +230,7 @@ Token Lexer::nextToken() {
   }
 }
 
-bool Lexer::hasMoreTokens() {
-  return position < static_cast<int>(source.size());
-}
+bool Lexer::hasMoreTokens() { return position < (int)(source.size()); }
 
 char Lexer::currentChar() {
   if (position >= source.size()) return '\0';
@@ -255,8 +250,7 @@ void Lexer::advance() {
 }
 
 void Lexer::skipWhitespace() {
-  while (hasMoreTokens() &&
-         isspace(static_cast<unsigned char>(currentChar()))) {
+  while (hasMoreTokens() && isspace((unsigned char)(currentChar()))) {
     advance();
   }
 }
@@ -268,7 +262,7 @@ Token Lexer::readIdentifierOrKeyword() {
 
   while (hasMoreTokens()) {
     char ch = currentChar();
-    if (isalnum(static_cast<unsigned char>(ch)) || ch == '_') {
+    if (isalnum((unsigned char)(ch)) || ch == '_') {
       token.value += ch;
       advance();
     } else {
@@ -302,8 +296,7 @@ Token Lexer::readNumber() {
   token.line = line;
   token.column = column;
 
-  while (hasMoreTokens() &&
-         isdigit(static_cast<unsigned char>(currentChar()))) {
+  while (hasMoreTokens() && isdigit((unsigned char)(currentChar()))) {
     token.value += currentChar();
     advance();
   }

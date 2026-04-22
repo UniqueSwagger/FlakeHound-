@@ -23,9 +23,6 @@ struct TestSuite {
 
 class XMLParser {
  public:
-  XMLParser();
-  ~XMLParser();
-
   bool parseGoogleTestXML(const string& filename);
 
   vector<TestSuite> getTestSuites() const;

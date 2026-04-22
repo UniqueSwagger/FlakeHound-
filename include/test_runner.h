@@ -18,7 +18,6 @@ struct RunResult {
 class TestRunner {
  public:
   TestRunner(string exePath);
-  ~TestRunner();
 
   vector<RunResult> runMultipleTimes(int times);
 

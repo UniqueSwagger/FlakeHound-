@@ -10,10 +10,6 @@
 using namespace std;
 using namespace std::filesystem;
 
-ReportGenerator::ReportGenerator() {}
-
-ReportGenerator::~ReportGenerator() {}
-
 void ReportGenerator::generateReport(string filename,
                                      vector<FlakinessScore>& scores) {
   string report = generateTextReport(scores);

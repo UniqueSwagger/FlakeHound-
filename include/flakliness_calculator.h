@@ -27,7 +27,6 @@ struct FlakinessScore {
 class FlakinessCalculator {
  public:
   FlakinessCalculator();
-  ~FlakinessCalculator();
 
   FlakinessScore calculateFlakiness(const string& testName,
                                     const vector<bool>& testResults,

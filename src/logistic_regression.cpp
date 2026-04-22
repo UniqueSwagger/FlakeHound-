@@ -11,8 +11,6 @@ LogisticRegressionSGD::LogisticRegressionSGD(int featureCount) : bias(0.0) {
   initialize(featureCount);
 }
 
-LogisticRegressionSGD::~LogisticRegressionSGD() {}
-
 void LogisticRegressionSGD::initialize(int featureCount) {
   weights.assign(featureCount, 0.0);
   bias = 0.0;

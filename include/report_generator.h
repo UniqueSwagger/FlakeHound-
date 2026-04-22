@@ -10,9 +10,6 @@ using namespace std;
 
 class ReportGenerator {
  public:
-  ReportGenerator();
-  ~ReportGenerator();
-
   void generateReport(string filename, vector<FlakinessScore>& scores);
   void saveTextReport(const string& filename, const string& reportText);
 

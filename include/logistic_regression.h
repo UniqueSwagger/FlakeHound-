@@ -10,7 +10,6 @@ class LogisticRegressionSGD {
  public:
   LogisticRegressionSGD();
   explicit LogisticRegressionSGD(int featureCount);
-  ~LogisticRegressionSGD();
 
   void initialize(int featureCount);
   void train(const vector<vector<double>>& features, const vector<int>& labels,

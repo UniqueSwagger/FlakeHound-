@@ -26,8 +26,6 @@ StaticAnalyzer::StaticAnalyzer() : riskModelReady(false) {
   initializeRiskModel();
 }
 
-StaticAnalyzer::~StaticAnalyzer() {}
-
 StaticAnalysisReport StaticAnalyzer::analyzeSourceCode(
     const string& targetName, const string& sourceCode) {
   StaticAnalysisReport report;

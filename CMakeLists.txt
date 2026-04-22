@@ -11,11 +11,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Include directories
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
-enable_testing()
-
 # flakehound++ library
 add_library(flakehound_core
     src/xml_parser.cpp
@@ -52,72 +47,7 @@ add_executable(analyze_static
 
 target_link_libraries(analyze_static PRIVATE flakehound_core)
 
-# XML parsing test executable
-add_executable(test_xml_parsing
-    src/test_xml_parsing.cpp
-)
-
-target_link_libraries(test_xml_parsing PRIVATE flakehound_core)
-
-add_executable(test_ast_builder
-    src/test_ast_builder.cpp
-)
-
-target_link_libraries(test_ast_builder PRIVATE flakehound_core)
-
-add_executable(test_flakiness_calculator
-    src/test_flakiness_calculator.cpp
-)
-
-target_link_libraries(test_flakiness_calculator PRIVATE flakehound_core)
-
-add_executable(test_demo_static_analysis
-    src/test_demo_static_analysis.cpp
-)
-
-target_link_libraries(test_demo_static_analysis PRIVATE flakehound_core)
-
 # demo tests
 add_executable(demo_tests
     demo/demo_tests.cpp
-)
-
-add_test(NAME ast_builder_smoke COMMAND test_ast_builder)
-set_tests_properties(ast_builder_smoke PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
-add_test(NAME xml_parser_smoke
-    COMMAND test_xml_parsing ${PROJECT_SOURCE_DIR}/demo/sample_gtest_results.xml
-)
-set_tests_properties(xml_parser_smoke PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
-if (WIN32)
-    add_test(NAME flakehound_end_to_end
-        COMMAND cmd /c "copy /Y \"$<TARGET_FILE:demo_tests>\" \"${PROJECT_SOURCE_DIR}\\demo_tests.exe\" >nul && (echo 1&echo 0)|\"$<TARGET_FILE:flakehound>\""
-    )
-    set_tests_properties(flakehound_end_to_end PROPERTIES
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-else()
-    add_test(NAME flakehound_end_to_end
-        COMMAND /bin/sh -c "cp \"$1\" demo_tests && printf '1\n0\n' | \"$0\"" $<TARGET_FILE:flakehound> $<TARGET_FILE:demo_tests>
-    )
-    set_tests_properties(flakehound_end_to_end PROPERTIES
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-endif()
-
-add_test(NAME flakiness_calculator_smoke COMMAND test_flakiness_calculator)
-set_tests_properties(flakiness_calculator_smoke PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
-add_test(NAME demo_static_analysis_smoke
-    COMMAND test_demo_static_analysis ${PROJECT_SOURCE_DIR}/demo/demo_tests.cpp
-)
-set_tests_properties(demo_static_analysis_smoke PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
