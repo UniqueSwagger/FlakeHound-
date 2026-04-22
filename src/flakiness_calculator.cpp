@@ -7,6 +7,7 @@
 
 using namespace std;
 
+// bujte hobe static analysis features
 vector<double> buildRankingFeatures(const FlakinessScore& score) {
   double failRate =
       score.totalRuns > 0 ? (double)(score.failures) / score.totalRuns : 0.0;
@@ -122,7 +123,6 @@ double FlakinessCalculator::computeWilsonScore(int passes, int totalRuns,
   if (totalRuns == 0) {
     return 0.0;
   }
-
   double p = (double)(passes) / totalRuns;
   double n = totalRuns;
 
@@ -147,7 +147,7 @@ int FlakinessCalculator::countTransitions(
   }
 
   int transitions = 0;
-  for (size_t i = 1; i < testResults.size(); i++) {
+  for (int i = 1; i < testResults.size(); i++) {
     if (testResults[i] != testResults[i - 1]) {
       transitions++;
     }
