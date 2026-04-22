@@ -1,3 +1,4 @@
+#ifndef LEXER_H
 #define LEXER_H
 #include <string>
 #include <vector>
@@ -65,3 +66,5 @@ class Lexer {
   Token readIdentifierOrKeyword();
   Token readNumber();
 };
+
+#endif

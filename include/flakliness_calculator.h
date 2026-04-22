@@ -1,3 +1,4 @@
+#ifndef FLAKINESS_CALCULATOR_H
 #define FLAKINESS_CALCULATOR_H
 #include <map>
 #include <string>
@@ -45,3 +46,5 @@ class FlakinessCalculator {
   double predictRankingScore(const FlakinessScore& score) const;
   string categorizeFlakiness(int passes, int failures, double coefficient);
 };
+
+#endif  // !FLAKINESS_CALCULATOR_H

@@ -16,14 +16,6 @@ string ensureQuotedCommand(const string& commandPath) {
   return "\"" + commandPath + "\"";
 }
 
-#ifdef _WIN32
-#define FLAKEHOUND_POPEN _popen
-#define FLAKEHOUND_PCLOSE _pclose
-#else
-#define FLAKEHOUND_POPEN popen
-#define FLAKEHOUND_PCLOSE pclose
-#endif
-
 TestRunner::TestRunner(string exePath) : executable(exePath) {}
 
 vector<RunResult> TestRunner::runMultipleTimes(int times) {
@@ -51,13 +43,13 @@ RunResult TestRunner::runOnce(int runNumber) {
 
   string command = ensureQuotedCommand(executable) + " 2>&1";
 
-  FILE* pipe = FLAKEHOUND_POPEN(command.c_str(), "r");
+  FILE* pipe = popen(command.c_str(), "r");
   if (pipe) {
     char buffer[1024];
     while (fgets(buffer, sizeof(buffer), pipe)) {
       result.output += buffer;
     }
-    FLAKEHOUND_PCLOSE(pipe);
+    pclose(pipe);
   }
 
   parseOutput(result);

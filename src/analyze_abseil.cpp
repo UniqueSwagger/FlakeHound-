@@ -70,15 +70,9 @@ void runTestsAndGenerateXML(const path& testExe, const path& outputDir,
                             const string& prefix, int runs) {
   for (int i = 1; i <= runs; i++) {
     path xmlFile = outputDir / (prefix + to_string(i) + ".xml");
-    string sink;
-#ifdef _WIN32
-    sink = "nul";
-#else
-    sink = "/dev/null";
-#endif
     string command = quotePath(testExe) +
                      " --gtest_output=xml:" + quotePath(xmlFile) + " > " +
-                     sink + " 2>&1";
+                     "nul 2>&1";
     cout << "  Test run #" << i << "/" << runs << "...\r" << flush;
     system(command.c_str());
   }

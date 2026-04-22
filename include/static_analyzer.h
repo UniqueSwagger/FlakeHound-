@@ -1,3 +1,4 @@
+#ifndef STATIC_ANALYZER_H
 #define STATIC_ANALYZER_H
 
 #include <map>
@@ -77,3 +78,5 @@ class StaticAnalyzer {
   bool subtreeContainsType(ASTNode* node, int type) const;
   string functionReturnType(ASTNode* functionNode) const;
 };
+
+#endif

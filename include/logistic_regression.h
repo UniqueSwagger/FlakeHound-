@@ -1,3 +1,4 @@
+#ifndef LOGISTIC_REGRESSION_H
 #define LOGISTIC_REGRESSION_H
 #include <cstddef>
 #include <vector>
@@ -25,3 +26,5 @@ class LogisticRegressionSGD {
   static double sigmoid(double x);
   double linearScore(const vector<double>& features) const;
 };
+
+#endif
