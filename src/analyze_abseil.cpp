@@ -12,8 +12,6 @@
 
 using namespace std;
 
-namespace {
-
 string quotePath(const filesystem::path& path) {
   return "\"" + path.string() + "\"";
 }
@@ -114,8 +112,6 @@ void loadXmlResults(const filesystem::path& dir, const string& prefix, int runs,
     }
   }
 }
-
-}  // namespace
 
 int main(int argc, char* argv[]) {
   cout << "FlakeHound++ - Abseil Test Analysis\n\n";

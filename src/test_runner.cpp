@@ -1,59 +1,28 @@
 #include "test_runner.h"
 
+#include <cstdio>
 #include <cstdlib>
-#include <filesystem>
 #include <iostream>
 #include <sstream>
 
 using namespace std;
 
-namespace {
-
-bool canWriteToDirectory(const filesystem::path& directory) {
-  error_code statusEc;
-  filesystem::create_directories(directory, statusEc);
-  if (!filesystem::exists(directory, statusEc)) {
-    return false;
+string ensureQuotedCommand(const string& commandPath) {
+  if (commandPath.size() >= 2 && commandPath.front() == '"' &&
+      commandPath.back() == '"') {
+    return commandPath;
   }
 
-  filesystem::path probe =
-      directory / "flakehound_write_probe.tmp";
-  FILE* file = fopen(probe.string().c_str(), "w");
-  if (!file) {
-    return false;
-  }
-
-  fclose(file);
-  remove(probe.string().c_str());
-  return true;
+  return "\"" + commandPath + "\"";
 }
 
-filesystem::path findWritableTempDirectory() {
-  vector<filesystem::path> candidates;
-
-  error_code ec;
-  filesystem::path detectedTemp = filesystem::temp_directory_path(ec);
-  if (!ec && !detectedTemp.empty()) {
-    candidates.push_back(detectedTemp);
-  }
-
-  candidates.push_back("/tmp");
-  candidates.push_back(filesystem::current_path());
-
-  for (const filesystem::path& candidate : candidates) {
-    if (candidate.empty()) {
-      continue;
-    }
-
-    if (canWriteToDirectory(candidate)) {
-      return candidate;
-    }
-  }
-
-  return filesystem::current_path();
-}
-
-}  // namespace
+#ifdef _WIN32
+#define FLAKEHOUND_POPEN _popen
+#define FLAKEHOUND_PCLOSE _pclose
+#else
+#define FLAKEHOUND_POPEN popen
+#define FLAKEHOUND_PCLOSE pclose
+#endif
 
 TestRunner::TestRunner(string exePath) : executable(exePath) {}
 
@@ -82,26 +51,18 @@ RunResult TestRunner::runOnce(int runNumber) {
   result.passedTests = 0;
   result.failedTests = 0;
 
-  filesystem::path tempFile =
-      findWritableTempDirectory() /
-      ("flakehound_temp_run_" + to_string(runNumber) + "_" +
-       to_string(hash<string>{}(executable)) + ".txt");
-  string command = executable + " > \"" + tempFile.string() + "\" 2>&1";
+  string command = ensureQuotedCommand(executable) + " 2>&1";
 
-  system(command.c_str());
-
-  FILE* file = fopen(tempFile.string().c_str(), "r");
-  if (file) {
+  FILE* pipe = FLAKEHOUND_POPEN(command.c_str(), "r");
+  if (pipe) {
     char buffer[1024];
-    while (fgets(buffer, sizeof(buffer), file)) {
+    while (fgets(buffer, sizeof(buffer), pipe)) {
       result.output += buffer;
     }
-    fclose(file);
+    FLAKEHOUND_PCLOSE(pipe);
   }
 
   parseOutput(result);
-
-  remove(tempFile.string().c_str());
 
   return result;
 }

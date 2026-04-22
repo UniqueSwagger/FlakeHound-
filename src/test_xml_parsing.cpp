@@ -6,8 +6,6 @@
 
 using namespace std;
 
-namespace {
-
 filesystem::path findXmlFile(int argc, char* argv[]) {
   vector<filesystem::path> candidates;
 
@@ -30,8 +28,6 @@ filesystem::path findXmlFile(int argc, char* argv[]) {
 
   return {};
 }
-
-}  // namespace
 
 int main(int argc, char* argv[]) {
   cout << "Testing XMLParser on GoogleTest XML output\n\n";

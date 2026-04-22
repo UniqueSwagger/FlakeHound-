@@ -2,6 +2,7 @@
 build/
 build-*/
 build-linux/
+simple-bin/
 cmake-build-*/
 out/
 abseil-cpp/

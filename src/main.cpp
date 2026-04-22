@@ -15,6 +15,7 @@
 #include "report_generator.h"
 #include "static_analyzer.h"
 #include "test_runner.h"
+#include "xml_parser.h"
 
 using namespace std;
 
@@ -22,7 +23,8 @@ struct CliOptions {
   filesystem::path requestedExecutable;
   filesystem::path requestedSource;
   int runs = 10;
-  string reportPath = (filesystem::path("reports") / "flakiness_report.txt").string();
+  string reportPath =
+      (filesystem::path("reports") / "flakiness_report.txt").string();
   string nameFilter;
   int minRuns = 1;
   string sortBy = "ranking";
@@ -38,6 +40,14 @@ struct StaticContext {
 
 string quotePath(const filesystem::path& path) {
   return "\"" + path.string() + "\"";
+}
+
+string nullDevice() {
+#ifdef _WIN32
+  return "nul";
+#else
+  return "/dev/null";
+#endif
 }
 
 bool startsWith(const string& value, const string& prefix) {
@@ -139,6 +149,40 @@ filesystem::path findSourcePath(const CliOptions& options,
 
     filesystem::path absolutePath = filesystem::absolute(candidate);
     if (filesystem::exists(absolutePath)) {
+      return absolutePath;
+    }
+  }
+
+  return {};
+}
+
+filesystem::path findDemoSourcePath() {
+  vector<filesystem::path> candidates;
+  candidates.push_back(filesystem::path("demo") / "demo_tests.cpp");
+  candidates.push_back(filesystem::path(__FILE__).parent_path().parent_path() /
+                       "demo" / "demo_tests.cpp");
+
+  for (const filesystem::path& candidate : candidates) {
+    filesystem::path absolutePath = filesystem::absolute(candidate);
+    if (filesystem::exists(absolutePath)) {
+      return absolutePath;
+    }
+  }
+
+  return {};
+}
+
+filesystem::path findAbseilDirectory() {
+  vector<filesystem::path> candidates;
+  candidates.push_back("abseil-cpp");
+  candidates.push_back(filesystem::path("..") / "abseil-cpp");
+  candidates.push_back(filesystem::path("..") / ".." / "abseil-cpp");
+  candidates.push_back(filesystem::path(__FILE__).parent_path().parent_path() /
+                       "abseil-cpp");
+
+  for (const filesystem::path& candidate : candidates) {
+    filesystem::path absolutePath = filesystem::absolute(candidate);
+    if (filesystem::is_directory(absolutePath)) {
       return absolutePath;
     }
   }
@@ -387,8 +431,7 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
     report += line.str();
   }
   report += "\nStatic Findings: " +
-            to_string((int)(staticContext.fileReport.findings.size())) +
-            "\n";
+            to_string((int)(staticContext.fileReport.findings.size())) + "\n";
 
   vector<string> fileCauses = collectCauseMessages(staticContext.fileReport);
   if (!fileCauses.empty()) {
@@ -419,10 +462,63 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
 
   return report;
 }
-int main(int argc, char* argv[]) {
+
+bool hasXmlSet(const filesystem::path& dir, const string& prefix, int runs) {
+  for (int i = 1; i <= runs; i++) {
+    if (!filesystem::exists(dir / (prefix + to_string(i) + ".xml"))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void runTestsAndGenerateXML(const filesystem::path& testExe,
+                            const filesystem::path& outputDir,
+                            const string& prefix, int runs) {
+  for (int i = 1; i <= runs; i++) {
+    filesystem::path xmlFile = outputDir / (prefix + to_string(i) + ".xml");
+    string command = quotePath(testExe) + " --gtest_output=xml:" +
+                     quotePath(xmlFile) + " > " + nullDevice() + " 2>&1";
+    cout << "  Test run #" << i << "/" << runs << "...\r" << flush;
+    system(command.c_str());
+  }
+  cout << "  Completed " << runs << " runs!\n";
+}
+
+void loadXmlResults(const filesystem::path& dir, const string& prefix, int runs,
+                    const string& label,
+                    map<string, vector<bool>>& testResults) {
+  cout << "\n[" << label << "]\n";
+
+  for (int i = 1; i <= runs; i++) {
+    filesystem::path xmlFile = dir / (prefix + to_string(i) + ".xml");
+    XMLParser parser;
+
+    if (parser.parseGoogleTestXML(xmlFile.string())) {
+      cout << "  Parsed run #" << i << "\n";
+
+      vector<TestSuite> suites = parser.getTestSuites();
+      for (const TestSuite& suite : suites) {
+        for (const TestResult& test : suite.testResults) {
+          string fullTestName = suite.name + "." + test.name;
+          testResults[fullTestName].push_back(test.status == "passed");
+        }
+      }
+    } else {
+      cout << "  Warning: Could not parse " << label << " run #" << i << "\n";
+    }
+  }
+}
+
+string defaultStaticReportPath(const filesystem::path& sourceFile) {
+  filesystem::path outputDir = "reports";
+  string stem = sourceFile.stem().string();
+  return (outputDir / (stem + "_static_analysis.txt")).string();
+}
+
+int runDynamicDemo(const CliOptions& options) {
   cout << "FlakeHound++ - Test Runner Demo\n";
 
-  CliOptions options = parseArguments(argc, argv);
   filesystem::path executablePath = findExecutablePath(options);
   if (executablePath.empty()) {
     cerr << "Error: could not find a demo test executable.\n";
@@ -488,6 +584,182 @@ int main(int argc, char* argv[]) {
   reportGenerator.saveTextReport(options.reportPath, reportText);
 
   cout << "FlakeHound++ Analysis Complete!\n";
+  cout << "Report: " << options.reportPath << "\n";
 
   return 0;
+}
+
+int runStaticAnalysis(const filesystem::path& sourceFile,
+                      const string& reportPath) {
+  cout << "FlakeHound++ - Static Analysis\n\n";
+
+  if (sourceFile.empty() || !filesystem::exists(sourceFile)) {
+    cerr << "Error: source file not found.\n";
+    return 1;
+  }
+
+  StaticAnalyzer analyzer;
+  StaticAnalysisReport report = analyzer.analyzeFile(sourceFile.string());
+  string textReport = analyzer.generateTextReport(report);
+
+  cout << textReport;
+
+  ReportGenerator generator;
+  generator.saveTextReport(reportPath, textReport);
+
+  cout << "Static analysis complete!\n";
+  cout << "Report: " << reportPath << "\n";
+
+  return 0;
+}
+
+int runAbseilAnalysis(int runs, const filesystem::path& reportPath) {
+  cout << "FlakeHound++ - Abseil Test Analysis\n\n";
+
+  filesystem::path abseilDir = findAbseilDirectory();
+  if (abseilDir.empty()) {
+    cerr << "Error: could not find the abseil-cpp directory.\n";
+    return 1;
+  }
+
+  filesystem::path asciiExe = abseilDir / "absl_ascii_test.exe";
+  filesystem::path bernoulliExe = abseilDir / "absl_bernoulli_test.exe";
+
+  bool haveAsciiXml = hasXmlSet(abseilDir, "run_", runs);
+  bool haveBernoulliXml = hasXmlSet(abseilDir, "bernoulli_run_", runs);
+
+  cout << "Step 1: Preparing XML inputs...\n";
+  if (haveAsciiXml && haveBernoulliXml) {
+    cout << "Using existing XML files in " << abseilDir.string() << "\n";
+  } else if (filesystem::exists(asciiExe) && filesystem::exists(bernoulliExe)) {
+    cout << "[ASCII Tests - " << runs << " runs]\n";
+    runTestsAndGenerateXML(asciiExe, abseilDir, "run_", runs);
+
+    cout << "\n[Bernoulli Tests - " << runs << " runs]\n";
+    runTestsAndGenerateXML(bernoulliExe, abseilDir, "bernoulli_run_", runs);
+  } else {
+    cerr << "Error: missing both reusable XML files and runnable Abseil test "
+            "executables.\n";
+    return 1;
+  }
+
+  cout << "\nStep 2: Parsing and analyzing XMLs...\n";
+
+  map<string, vector<bool>> testResults;
+  loadXmlResults(abseilDir, "run_", runs, "ASCII Tests", testResults);
+  loadXmlResults(abseilDir, "bernoulli_run_", runs, "Bernoulli Tests",
+                 testResults);
+
+  cout << "\nAnalyzing " << testResults.size() << " unique tests...\n\n";
+
+  FlakinessCalculator calculator;
+  vector<FlakinessScore> scores = calculator.calculateForAllTests(testResults);
+
+  cout << "Flakiness Summary:\n";
+  for (const FlakinessScore& score : scores) {
+    cout << "  " << score.testName << ": " << score.passes << "/"
+         << score.totalRuns << " (" << score.category << ")\n";
+  }
+
+  ReportGenerator reporter;
+  reporter.generateReport(reportPath.string(), scores);
+
+  cout << "\nAbseil Analysis Complete!\n";
+  cout << "Report: " << reportPath.string() << "\n";
+
+  return 0;
+}
+
+void printMenu() {
+  cout << "FlakeHound++ Menu\n";
+  cout << "1. Run demo analysis (dynamic + static)\n";
+  cout << "2. Run demo static analysis only\n";
+  cout << "3. Run Abseil dynamic XML analysis only\n";
+  cout << "4. Run everything\n";
+  cout << "0. Exit\n";
+  cout << "\nChoose an option: ";
+}
+
+int runMenu() {
+  while (true) {
+    printMenu();
+
+    string choice;
+    getline(cin, choice);
+
+    if (choice == "0") {
+      cout << "Exiting FlakeHound++.\n";
+      return 0;
+    }
+
+    if (choice == "1") {
+      CliOptions options;
+      options.runs = 8;
+      options.reportPath = (filesystem::path("reports") / "flakiness_report.txt").string();
+      int result = runDynamicDemo(options);
+      cout << "\n";
+      if (result != 0) {
+        return result;
+      }
+      continue;
+    }
+
+    if (choice == "2") {
+      filesystem::path demoSource = findDemoSourcePath();
+      string reportPath = defaultStaticReportPath(demoSource);
+      int result = runStaticAnalysis(demoSource, reportPath);
+      cout << "\n";
+      if (result != 0) {
+        return result;
+      }
+      continue;
+    }
+
+    if (choice == "3") {
+      int result = runAbseilAnalysis(
+          20, filesystem::path("reports") / "abseil_flakiness_report.txt");
+      cout << "\n";
+      if (result != 0) {
+        return result;
+      }
+      continue;
+    }
+
+    if (choice == "4") {
+      CliOptions options;
+      options.runs = 8;
+      options.reportPath = (filesystem::path("reports") / "flakiness_report.txt").string();
+
+      int result = runDynamicDemo(options);
+      if (result != 0) {
+        return result;
+      }
+
+      filesystem::path demoSource = findDemoSourcePath();
+      result = runStaticAnalysis(demoSource, defaultStaticReportPath(demoSource));
+      if (result != 0) {
+        return result;
+      }
+
+      result = runAbseilAnalysis(
+          20, filesystem::path("reports") / "abseil_flakiness_report.txt");
+      if (result != 0) {
+        return result;
+      }
+
+      cout << "\nAll analyses completed.\n\n";
+      continue;
+    }
+
+    cout << "Invalid option. Try again.\n\n";
+  }
+}
+
+int main(int argc, char* argv[]) {
+  if (argc == 1) {
+    return runMenu();
+  }
+
+  CliOptions options = parseArguments(argc, argv);
+  return runDynamicDemo(options);
 }

@@ -8,8 +8,6 @@
 
 using namespace std;
 
-namespace {
-
 int countOccurrences(const string& source, const vector<string>& needles) {
   int count = 0;
 
@@ -24,8 +22,6 @@ int countOccurrences(const string& source, const vector<string>& needles) {
   return count;
 }
 
-}  // namespace
-
 StaticAnalyzer::StaticAnalyzer() : riskModelReady(false) {
   initializeRiskModel();
 }
@@ -39,7 +35,7 @@ StaticAnalysisReport StaticAnalyzer::analyzeSourceCode(const string& targetName,
 
   Lexer lexer(sourceCode);
   vector<Token> tokens = lexer.tokenize();
-  report.tokenCount = static_cast<int>(tokens.size());
+  report.tokenCount = (int)(tokens.size());
 
   ASTBuilder builder(tokens);
   ASTNode* astRoot = builder.buildAST();
@@ -309,21 +305,21 @@ void StaticAnalyzer::detectSourcePatterns(
 vector<double> StaticAnalyzer::buildModelFeatures(
     const StaticAnalysisReport& report) const {
   return {
-      static_cast<double>(report.features.randomUsageCount),
-      static_cast<double>(report.features.sleepWaitCount),
-      static_cast<double>(report.features.timeUsageCount),
-      static_cast<double>(report.features.environmentUsageCount),
-      static_cast<double>(report.features.globalVariableCount),
-      static_cast<double>(report.features.threadUsageCount),
-      static_cast<double>(report.features.nullUsageCount),
-      static_cast<double>(report.features.divisionByZeroCount),
-      static_cast<double>(report.features.arrayIndexCount),
-      static_cast<double>(report.features.uninitializedVariableCount),
-      static_cast<double>(report.features.missingReturnCount),
-      static_cast<double>(report.features.branchCount),
-      static_cast<double>(report.features.loopCount),
-      static_cast<double>(report.cfgNodeCount),
-      static_cast<double>(report.findings.size())};
+      (double)(report.features.randomUsageCount),
+      (double)(report.features.sleepWaitCount),
+      (double)(report.features.timeUsageCount),
+      (double)(report.features.environmentUsageCount),
+      (double)(report.features.globalVariableCount),
+      (double)(report.features.threadUsageCount),
+      (double)(report.features.nullUsageCount),
+      (double)(report.features.divisionByZeroCount),
+      (double)(report.features.arrayIndexCount),
+      (double)(report.features.uninitializedVariableCount),
+      (double)(report.features.missingReturnCount),
+      (double)(report.features.branchCount),
+      (double)(report.features.loopCount),
+      (double)(report.cfgNodeCount),
+      (double)(report.findings.size())};
 }
 
 void StaticAnalyzer::addFinding(vector<StaticFinding>& findings,
