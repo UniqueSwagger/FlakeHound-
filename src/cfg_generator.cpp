@@ -6,8 +6,10 @@
 
 using namespace std;
 
-CFGGenerator::CFGGenerator(ASTNode* astRoot)
-    : astRoot(astRoot), nodeIdCounter(0) {}
+CFGGenerator::CFGGenerator(ASTNode* rootNode) {
+  astRoot = rootNode;
+  nodeIdCounter = 0;
+}
 
 CFGGenerator::~CFGGenerator() {
   for (CFGNode* node : allNodes) {

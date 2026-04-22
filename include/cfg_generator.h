@@ -14,8 +14,11 @@ class CFGNode {
   std::vector<CFGNode*> successors;
   ASTNode* astNode;
 
-  CFGNode(int nodeId, ASTNode* node, const std::string& nodeLabel = "")
-      : id(nodeId), label(nodeLabel), astNode(node) {}
+  CFGNode(int nodeId, ASTNode* node, const std::string& nodeLabel = "") {
+    id = nodeId;
+    label = nodeLabel;
+    astNode = node;
+  }
 };
 
 class CFGGenerator {

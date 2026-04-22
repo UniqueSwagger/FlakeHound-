@@ -4,8 +4,11 @@
 
 using namespace std;
 
-ASTBuilder::ASTBuilder(vector<Token> tokens)
-    : tokens(tokens), currentIndex(0), root(nullptr) {}
+ASTBuilder::ASTBuilder(vector<Token> tokenList) {
+  tokens = tokenList;
+  currentIndex = 0;
+  root = nullptr;
+}
 
 ASTBuilder::~ASTBuilder() { delete root; }
 

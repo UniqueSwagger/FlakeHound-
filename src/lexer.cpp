@@ -4,8 +4,12 @@
 
 using namespace std;
 
-Lexer::Lexer(string sourceCode)
-    : source(sourceCode), position(0), line(1), column(1) {}
+Lexer::Lexer(string sourceCode) {
+  source = sourceCode;
+  position = 0;
+  line = 1;
+  column = 1;
+}
 
 vector<Token> Lexer::tokenize() {
   vector<Token> tokens;

@@ -16,7 +16,8 @@ vector<double> buildRankingFeatures(const FlakinessScore& score) {
           1.0 - score.wilsonScore, score.staticRiskScore * 0.25, runCoverage};
 }
 
-FlakinessCalculator::FlakinessCalculator() : rankingModelReady(false) {
+FlakinessCalculator::FlakinessCalculator() {
+  rankingModelReady = false;
   initializeRankingModel();
 }
 

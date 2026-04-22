@@ -1,9 +1,6 @@
 #include "test_runner.h"
 
-#include <cstdio>
-#include <cstdlib>
 #include <iostream>
-#include <sstream>
 
 using namespace std;
 
@@ -16,8 +13,9 @@ string ensureQuotedCommand(const string& commandPath) {
   return "\"" + commandPath + "\"";
 }
 
-TestRunner::TestRunner(string exePath) : executable(exePath) {}
-
+TestRunner::TestRunner(string exePath) {
+  executable = ensureQuotedCommand(exePath);
+}
 vector<RunResult> TestRunner::runMultipleTimes(int times) {
   allResults.clear();
 

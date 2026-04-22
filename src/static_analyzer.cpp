@@ -22,7 +22,8 @@ int countOccurrences(const string& source, const vector<string>& needles) {
   return count;
 }
 
-StaticAnalyzer::StaticAnalyzer() : riskModelReady(false) {
+StaticAnalyzer::StaticAnalyzer() {
+  riskModelReady = false;
   initializeRiskModel();
 }
 

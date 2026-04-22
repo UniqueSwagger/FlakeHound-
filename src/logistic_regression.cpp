@@ -5,9 +5,12 @@
 
 using namespace std;
 
-LogisticRegressionSGD::LogisticRegressionSGD() : bias(0.0) {}
+LogisticRegressionSGD::LogisticRegressionSGD() {
+  bias = 0.0;
+}
 
-LogisticRegressionSGD::LogisticRegressionSGD(int featureCount) : bias(0.0) {
+LogisticRegressionSGD::LogisticRegressionSGD(int featureCount) {
+  bias = 0.0;
   initialize(featureCount);
 }
 
