@@ -6,7 +6,6 @@
 #include "flakliness_calculator.h"
 
 using namespace std;
-using namespace std::filesystem;
 
 int main() {
   map<string, vector<bool>> testResults = {

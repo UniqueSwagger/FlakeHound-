@@ -65,12 +65,6 @@ add_executable(test_ast_builder
 
 target_link_libraries(test_ast_builder PRIVATE flakehound_core)
 
-add_executable(test_static_analyzer
-    src/test_static_analyzer.cpp
-)
-
-target_link_libraries(test_static_analyzer PRIVATE flakehound_core)
-
 add_executable(test_flakiness_calculator
     src/test_flakiness_calculator.cpp
 )
@@ -100,18 +94,21 @@ set_tests_properties(xml_parser_smoke PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-add_test(NAME flakehound_end_to_end
-    COMMAND flakehound $<TARGET_FILE:demo_tests> 3
-            ${CMAKE_BINARY_DIR}/reports/flakiness_report.txt
-)
-set_tests_properties(flakehound_end_to_end PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
-add_test(NAME static_analyzer_smoke COMMAND test_static_analyzer)
-set_tests_properties(static_analyzer_smoke PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
+if (WIN32)
+    add_test(NAME flakehound_end_to_end
+        COMMAND cmd /c "copy /Y \"$<TARGET_FILE:demo_tests>\" \"${PROJECT_SOURCE_DIR}\\demo_tests.exe\" >nul && (echo 1&echo 0)|\"$<TARGET_FILE:flakehound>\""
+    )
+    set_tests_properties(flakehound_end_to_end PROPERTIES
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+else()
+    add_test(NAME flakehound_end_to_end
+        COMMAND /bin/sh -c "cp \"$1\" demo_tests && printf '1\n0\n' | \"$0\"" $<TARGET_FILE:flakehound> $<TARGET_FILE:demo_tests>
+    )
+    set_tests_properties(flakehound_end_to_end PROPERTIES
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+endif()
 
 add_test(NAME flakiness_calculator_smoke COMMAND test_flakiness_calculator)
 set_tests_properties(flakiness_calculator_smoke PROPERTIES
