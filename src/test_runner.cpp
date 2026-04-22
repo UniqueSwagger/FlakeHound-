@@ -70,7 +70,7 @@ RunResult TestRunner::runOnce(int runNumber) {
 void TestRunner::parseOutput(RunResult& result) {
   string output = result.output;
 
-  size_t pos = 0;
+  int pos = 0;
   while ((pos = output.find("PASS:", pos)) != string::npos) {
     result.passedTests++;
     pos += 5;

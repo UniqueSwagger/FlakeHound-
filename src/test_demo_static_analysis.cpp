@@ -5,23 +5,23 @@
 #include "static_analyzer.h"
 
 using namespace std;
+using namespace std::filesystem;
 
-filesystem::path findDemoSource(int argc, char* argv[]) {
+path findDemoSource(int argc, char* argv[]) {
   if (argc >= 2) {
-    filesystem::path requested = filesystem::absolute(argv[1]);
-    if (filesystem::exists(requested)) {
+    path requested = absolute(argv[1]);
+    if (exists(requested)) {
       return requested;
     }
   }
 
-  const filesystem::path candidates[] = {
-      filesystem::path("demo") / "demo_tests.cpp",
-      filesystem::path(__FILE__).parent_path().parent_path() / "demo" /
-          "demo_tests.cpp"};
+  const path candidates[] = {
+      path("demo") / "demo_tests.cpp",
+      path(__FILE__).parent_path().parent_path() / "demo" / "demo_tests.cpp"};
 
-  for (const filesystem::path& candidate : candidates) {
-    filesystem::path absolutePath = filesystem::absolute(candidate);
-    if (filesystem::exists(absolutePath)) {
+  for (const path& candidate : candidates) {
+    path absolutePath = absolute(candidate);
+    if (exists(absolutePath)) {
       return absolutePath;
     }
   }
@@ -30,7 +30,7 @@ filesystem::path findDemoSource(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-  filesystem::path demoSource = findDemoSource(argc, argv);
+  path demoSource = findDemoSource(argc, argv);
   if (demoSource.empty()) {
     cerr << "Could not find demo_tests.cpp for static analysis.\n";
     return 1;

@@ -12,7 +12,7 @@ int countOccurrences(const string& source, const vector<string>& needles) {
   int count = 0;
 
   for (const string& needle : needles) {
-    size_t pos = 0;
+    int pos = 0;
     while ((pos = source.find(needle, pos)) != string::npos) {
       count++;
       pos += needle.length();
@@ -28,8 +28,8 @@ StaticAnalyzer::StaticAnalyzer() : riskModelReady(false) {
 
 StaticAnalyzer::~StaticAnalyzer() {}
 
-StaticAnalysisReport StaticAnalyzer::analyzeSourceCode(const string& targetName,
-                                                       const string& sourceCode) {
+StaticAnalysisReport StaticAnalyzer::analyzeSourceCode(
+    const string& targetName, const string& sourceCode) {
   StaticAnalysisReport report;
   report.targetName = targetName;
 
@@ -107,10 +107,10 @@ string StaticAnalyzer::generateTextReport(
   if (report.findings.empty()) {
     output << "No issues detected by the current rule set.\n";
   } else {
-    for (size_t i = 0; i < report.findings.size(); i++) {
+    for (int i = 0; i < report.findings.size(); i++) {
       const StaticFinding& finding = report.findings[i];
-      output << (i + 1) << ". [" << finding.severity << "] "
-             << finding.category << ": " << finding.message << "\n";
+      output << (i + 1) << ". [" << finding.severity << "] " << finding.category
+             << ": " << finding.message << "\n";
       if (!finding.evidence.empty()) {
         output << "   Evidence: " << finding.evidence << "\n";
       }
@@ -160,7 +160,8 @@ void StaticAnalyzer::collectAstMetrics(ASTNode* node, ASTNode* parent,
   switch (node->type) {
     case NODE_FUNCTION:
       features.functionCount++;
-      if (functionReturnType(node) != "void" && !subtreeContainsType(node, NODE_RETURN)) {
+      if (functionReturnType(node) != "void" &&
+          !subtreeContainsType(node, NODE_RETURN)) {
         features.missingReturnCount++;
         addFinding(findings, "code_problem", "high",
                    "Non-void function may exit without returning a value.",
@@ -178,8 +179,8 @@ void StaticAnalyzer::collectAstMetrics(ASTNode* node, ASTNode* parent,
       if (node->children.empty() && parent != programRoot) {
         features.uninitializedVariableCount++;
         addFinding(findings, "code_problem", "medium",
-                   "Variable declared without an initializer.",
-                   node->value, node->line);
+                   "Variable declared without an initializer.", node->value,
+                   node->line);
       }
       break;
 
@@ -198,7 +199,8 @@ void StaticAnalyzer::collectAstMetrics(ASTNode* node, ASTNode* parent,
 
     case NODE_EXPRESSION:
       if ((node->value == "/" || node->value == "%") &&
-          node->children.size() >= 2 && node->children[1]->type == NODE_NUMBER &&
+          node->children.size() >= 2 &&
+          node->children[1]->type == NODE_NUMBER &&
           node->children[1]->value == "0") {
         features.divisionByZeroCount++;
         addFinding(findings, "code_problem", "high",
@@ -220,42 +222,37 @@ void StaticAnalyzer::collectAstMetrics(ASTNode* node, ASTNode* parent,
 void StaticAnalyzer::detectSourcePatterns(
     const string& sourceCode, StaticFeatureVector& features,
     vector<StaticFinding>& findings) const {
-  features.randomUsageCount +=
-      countOccurrences(sourceCode,
-                       {"rand(", "random_device", "mt19937", "uniform_"});
+  features.randomUsageCount += countOccurrences(
+      sourceCode, {"rand(", "random_device", "mt19937", "uniform_"});
   if (features.randomUsageCount > 0) {
     addFinding(findings, "flakiness_cause", "high",
                "Randomness detected without any stability guarantees.",
                "rand()/random_device/mt19937",
-               findLineNumber(sourceCode,
-                              {"rand(", "random_device", "mt19937",
-                               "uniform_"}));
+               findLineNumber(sourceCode, {"rand(", "random_device", "mt19937",
+                                           "uniform_"}));
   }
 
   features.sleepWaitCount +=
-      countOccurrences(sourceCode,
-                       {"sleep_for", "sleep_until", "usleep", "wait_for",
-                        "wait_until", "nanosleep"});
+      countOccurrences(sourceCode, {"sleep_for", "sleep_until", "usleep",
+                                    "wait_for", "wait_until", "nanosleep"});
   if (features.sleepWaitCount > 0) {
-    addFinding(findings, "flakiness_cause", "high",
-               "Sleep or wait-based timing logic can make tests flaky.",
-               "sleep_for/wait_for",
-               findLineNumber(sourceCode,
-                              {"sleep_for", "sleep_until", "usleep",
-                               "wait_for", "wait_until", "nanosleep"}));
+    addFinding(
+        findings, "flakiness_cause", "high",
+        "Sleep or wait-based timing logic can make tests flaky.",
+        "sleep_for/wait_for",
+        findLineNumber(sourceCode, {"sleep_for", "sleep_until", "usleep",
+                                    "wait_for", "wait_until", "nanosleep"}));
   }
 
-  features.timeUsageCount +=
-      countOccurrences(sourceCode,
-                       {"time(", "chrono::", "system_clock", "steady_clock",
-                        "high_resolution_clock", "now()"});
+  features.timeUsageCount += countOccurrences(
+      sourceCode, {"time(", "chrono::", "system_clock", "steady_clock",
+                   "high_resolution_clock", "now()"});
   if (features.timeUsageCount > 0) {
     addFinding(findings, "flakiness_cause", "high",
                "Time-dependent logic detected.", "time()/chrono usage",
-               findLineNumber(sourceCode,
-                              {"time(", "chrono::", "system_clock",
-                               "steady_clock", "high_resolution_clock",
-                               "now()"}));
+               findLineNumber(sourceCode, {"time(", "chrono::", "system_clock",
+                                           "steady_clock",
+                                           "high_resolution_clock", "now()"}));
   }
 
   features.environmentUsageCount +=
@@ -271,13 +268,13 @@ void StaticAnalyzer::detectSourcePatterns(
                                     "condition_variable", "mutex", "atomic<",
                                     "std::this_thread"});
   if (features.threadUsageCount > 0) {
-    addFinding(findings, "flakiness_cause", "high",
-               "Concurrency primitives detected; race conditions may affect tests.",
-               "thread/mutex/atomic",
-               findLineNumber(sourceCode,
-                              {"std::thread", "pthread_", "std::async",
-                               "condition_variable", "mutex", "atomic<",
-                               "std::this_thread"}));
+    addFinding(
+        findings, "flakiness_cause", "high",
+        "Concurrency primitives detected; race conditions may affect tests.",
+        "thread/mutex/atomic",
+        findLineNumber(sourceCode, {"std::thread", "pthread_", "std::async",
+                                    "condition_variable", "mutex", "atomic<",
+                                    "std::this_thread"}));
   }
 
   features.nullUsageCount += countOccurrences(sourceCode, {"nullptr", "NULL"});
@@ -287,7 +284,8 @@ void StaticAnalyzer::detectSourcePatterns(
                "nullptr/NULL", findLineNumber(sourceCode, "nullptr"));
   }
 
-  features.divisionByZeroCount += countOccurrences(sourceCode, {"/ 0", "/0", "% 0", "%0"});
+  features.divisionByZeroCount +=
+      countOccurrences(sourceCode, {"/ 0", "/0", "% 0", "%0"});
   if (features.divisionByZeroCount > 0) {
     addFinding(findings, "code_problem", "high",
                "Literal division by zero pattern found in source text.", "/ 0",
@@ -304,29 +302,27 @@ void StaticAnalyzer::detectSourcePatterns(
 
 vector<double> StaticAnalyzer::buildModelFeatures(
     const StaticAnalysisReport& report) const {
-  return {
-      (double)(report.features.randomUsageCount),
-      (double)(report.features.sleepWaitCount),
-      (double)(report.features.timeUsageCount),
-      (double)(report.features.environmentUsageCount),
-      (double)(report.features.globalVariableCount),
-      (double)(report.features.threadUsageCount),
-      (double)(report.features.nullUsageCount),
-      (double)(report.features.divisionByZeroCount),
-      (double)(report.features.arrayIndexCount),
-      (double)(report.features.uninitializedVariableCount),
-      (double)(report.features.missingReturnCount),
-      (double)(report.features.branchCount),
-      (double)(report.features.loopCount),
-      (double)(report.cfgNodeCount),
-      (double)(report.findings.size())};
+  return {(double)(report.features.randomUsageCount),
+          (double)(report.features.sleepWaitCount),
+          (double)(report.features.timeUsageCount),
+          (double)(report.features.environmentUsageCount),
+          (double)(report.features.globalVariableCount),
+          (double)(report.features.threadUsageCount),
+          (double)(report.features.nullUsageCount),
+          (double)(report.features.divisionByZeroCount),
+          (double)(report.features.arrayIndexCount),
+          (double)(report.features.uninitializedVariableCount),
+          (double)(report.features.missingReturnCount),
+          (double)(report.features.branchCount),
+          (double)(report.features.loopCount),
+          (double)(report.cfgNodeCount),
+          (double)(report.findings.size())};
 }
 
 void StaticAnalyzer::addFinding(vector<StaticFinding>& findings,
-                                const string& category,
-                                const string& severity,
-                                const string& message,
-                                const string& evidence, int line) const {
+                                const string& category, const string& severity,
+                                const string& message, const string& evidence,
+                                int line) const {
   for (const StaticFinding& existing : findings) {
     if (existing.message == message && existing.evidence == evidence &&
         existing.line == line) {
@@ -343,13 +339,13 @@ int StaticAnalyzer::findLineNumber(const string& sourceCode,
     return 0;
   }
 
-  size_t pos = sourceCode.find(needle);
+  int pos = sourceCode.find(needle);
   if (pos == string::npos) {
     return 0;
   }
 
   int line = 1;
-  for (size_t i = 0; i < pos; i++) {
+  for (int i = 0; i < pos; i++) {
     if (sourceCode[i] == '\n') {
       line++;
     }
@@ -391,7 +387,7 @@ string StaticAnalyzer::functionReturnType(ASTNode* functionNode) const {
     return "";
   }
 
-  size_t separator = functionNode->value.find(' ');
+  int separator = functionNode->value.find(' ');
   if (separator == string::npos) {
     return functionNode->value;
   }

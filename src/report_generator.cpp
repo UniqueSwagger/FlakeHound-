@@ -8,6 +8,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace std::filesystem;
 
 ReportGenerator::ReportGenerator() {}
 
@@ -21,9 +22,9 @@ void ReportGenerator::generateReport(string filename,
 
 void ReportGenerator::saveTextReport(const string& filename,
                                      const string& reportText) {
-  std::filesystem::path outPath(filename);
+  path outPath(filename);
   if (!outPath.parent_path().empty()) {
-    std::filesystem::create_directories(outPath.parent_path());
+    create_directories(outPath.parent_path());
   }
 
   ofstream file(filename);

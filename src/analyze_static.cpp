@@ -7,9 +7,10 @@
 #include "static_analyzer.h"
 
 using namespace std;
+using namespace std::filesystem;
 
-string defaultReportPath(const filesystem::path& sourceFile) {
-  filesystem::path outputDir = "reports";
+string defaultReportPath(const path& sourceFile) {
+  path outputDir = "reports";
   string stem = sourceFile.stem().string();
   return (outputDir / (stem + "_static_analysis.txt")).string();
 }
@@ -20,8 +21,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  filesystem::path sourceFile = argv[1];
-  if (!filesystem::exists(sourceFile)) {
+  path sourceFile = argv[1];
+  if (!exists(sourceFile)) {
     cerr << "Error: source file not found: " << sourceFile.string() << "\n";
     return 1;
   }
@@ -34,7 +35,7 @@ int main(int argc, char* argv[]) {
 
   ReportGenerator generator;
   string outputPath =
-      argc >= 3 ? argv[2] : defaultReportPath(filesystem::absolute(sourceFile));
+      argc >= 3 ? argv[2] : defaultReportPath(absolute(sourceFile));
   generator.saveTextReport(outputPath, textReport);
 
   return 0;

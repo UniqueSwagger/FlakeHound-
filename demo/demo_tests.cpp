@@ -5,6 +5,7 @@
 #include <vector>
 
 using namespace std;
+using namespace std::filesystem;
 
 bool test_addition() {
   int a = 5;
@@ -32,8 +33,8 @@ bool test_string_length() {
 }
 
 bool test_random_number() {
-  unsigned seed = (unsigned)(
-      chrono::steady_clock::now().time_since_epoch().count());
+  unsigned seed =
+      (unsigned)(chrono::steady_clock::now().time_since_epoch().count());
   srand(seed);
   int random_value = rand() % 10;
 
@@ -47,8 +48,9 @@ bool test_random_number() {
 }
 
 bool test_timing_based() {
-  int current_time = (int)(
-      chrono::high_resolution_clock::now().time_since_epoch().count() % 10);
+  int current_time =
+      (int)(chrono::high_resolution_clock::now().time_since_epoch().count() %
+            10);
 
   if (current_time >= 5) {
     cout << "PASS: test_timing_based (time mod = " << current_time << ")\n";

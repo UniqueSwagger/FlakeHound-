@@ -18,28 +18,23 @@
 #include "xml_parser.h"
 
 using namespace std;
+using namespace std::filesystem;
 
 struct CliOptions {
-  filesystem::path requestedExecutable;
-  filesystem::path requestedSource;
-  int runs = 10;
-  string reportPath =
-      (filesystem::path("reports") / "flakiness_report.txt").string();
-  string nameFilter;
-  int minRuns = 1;
-  string sortBy = "ranking";
+  int runs = 8;
+  string reportPath = (path("reports") / "flakiness_report.txt").string();
 };
 
 struct StaticContext {
   bool available = false;
-  filesystem::path sourcePath;
+  path sourcePath;
   StaticAnalysisReport fileReport;
   map<string, double> riskByTest;
   map<string, vector<string>> causesByTest;
 };
 
-string quotePath(const filesystem::path& path) {
-  return "\"" + path.string() + "\"";
+string quotePath(const path& filePath) {
+  return "\"" + filePath.string() + "\"";
 }
 
 string nullDevice() {
@@ -50,147 +45,49 @@ string nullDevice() {
 #endif
 }
 
-bool startsWith(const string& value, const string& prefix) {
-  return value.rfind(prefix, 0) == 0;
-}
+path findFirstExisting(const vector<path>& candidates,
+                       bool expectDirectory = false) {
+  for (const path& candidate : candidates) {
+    if (candidate.empty()) {
+      continue;
+    }
 
-string toLowerCopy(string value) {
-  transform(value.begin(), value.end(), value.begin(),
-            [](unsigned char c) { return (char)(tolower(c)); });
-  return value;
-}
-
-CliOptions parseArguments(int argc, char* argv[]) {
-  CliOptions options;
-  vector<string> positional;
-
-  for (int i = 1; i < argc; i++) {
-    string arg = argv[i];
-
-    if (startsWith(arg, "--filter=")) {
-      options.nameFilter = arg.substr(string("--filter=").length());
-    } else if (startsWith(arg, "--min-runs=")) {
-      int parsed = atoi(arg.substr(string("--min-runs=").length()).c_str());
-      if (parsed > 0) {
-        options.minRuns = parsed;
-      }
-    } else if (startsWith(arg, "--sort=")) {
-      options.sortBy = toLowerCopy(arg.substr(string("--sort=").length()));
-    } else if (startsWith(arg, "--source=")) {
-      options.requestedSource = arg.substr(string("--source=").length());
-    } else {
-      positional.push_back(arg);
+    path absolutePath = absolute(candidate);
+    bool existsNow =
+        expectDirectory ? is_directory(absolutePath) : exists(absolutePath);
+    if (existsNow) {
+      return absolutePath;
     }
   }
 
-  if (!positional.empty()) {
-    options.requestedExecutable = positional[0];
-  }
-  if (positional.size() >= 2) {
-    int parsedRuns = atoi(positional[1].c_str());
-    if (parsedRuns > 0) {
-      options.runs = parsedRuns;
-    }
-  }
-  if (positional.size() >= 3) {
-    options.reportPath = positional[2];
-  }
-
-  return options;
+  return {};
 }
 
-filesystem::path findExecutablePath(const CliOptions& options) {
-  vector<filesystem::path> candidates;
-
-  if (!options.requestedExecutable.empty()) {
-    candidates.push_back(options.requestedExecutable);
-  }
-
-  candidates.push_back("demo_tests");
+path findDemoExecutable() {
+  vector<path> candidates;
   candidates.push_back("demo_tests.exe");
-  candidates.push_back(filesystem::path("demo") / "demo_tests");
-  candidates.push_back(filesystem::path("demo") / "demo_tests.exe");
-  candidates.push_back(filesystem::path("build") / "bin" / "demo_tests");
-  candidates.push_back(filesystem::path("build") / "bin" / "demo_tests.exe");
+  candidates.push_back("demo_tests");
+  candidates.push_back(path("demo") / "demo_tests.exe");
+  candidates.push_back(path("demo") / "demo_tests");
 
-  for (const filesystem::path& candidate : candidates) {
-    if (candidate.empty()) {
-      continue;
-    }
-
-    filesystem::path absolutePath = filesystem::absolute(candidate);
-    if (filesystem::exists(absolutePath)) {
-      return absolutePath;
-    }
-  }
-
-  return {};
+  return findFirstExisting(candidates);
 }
 
-filesystem::path findSourcePath(const CliOptions& options,
-                                const filesystem::path& executablePath) {
-  vector<filesystem::path> candidates;
-
-  if (!options.requestedSource.empty()) {
-    candidates.push_back(options.requestedSource);
-  }
-
-  const string stem = executablePath.stem().string();
-  candidates.push_back(filesystem::path("demo") / (stem + ".cpp"));
-  candidates.push_back(filesystem::path("src") / (stem + ".cpp"));
-  candidates.push_back(executablePath.parent_path() / (stem + ".cpp"));
-  candidates.push_back(filesystem::path(__FILE__).parent_path().parent_path() /
-                       "demo" / (stem + ".cpp"));
-
-  for (const filesystem::path& candidate : candidates) {
-    if (candidate.empty()) {
-      continue;
-    }
-
-    filesystem::path absolutePath = filesystem::absolute(candidate);
-    if (filesystem::exists(absolutePath)) {
-      return absolutePath;
-    }
-  }
-
-  return {};
+path findDemoSource() {
+  vector<path> candidates;
+  candidates.push_back(path("demo") / "demo_tests.cpp");
+  return findFirstExisting(candidates);
 }
 
-filesystem::path findDemoSourcePath() {
-  vector<filesystem::path> candidates;
-  candidates.push_back(filesystem::path("demo") / "demo_tests.cpp");
-  candidates.push_back(filesystem::path(__FILE__).parent_path().parent_path() /
-                       "demo" / "demo_tests.cpp");
-
-  for (const filesystem::path& candidate : candidates) {
-    filesystem::path absolutePath = filesystem::absolute(candidate);
-    if (filesystem::exists(absolutePath)) {
-      return absolutePath;
-    }
-  }
-
-  return {};
-}
-
-filesystem::path findAbseilDirectory() {
-  vector<filesystem::path> candidates;
+path findAbseilDirectory() {
+  vector<path> candidates;
   candidates.push_back("abseil-cpp");
-  candidates.push_back(filesystem::path("..") / "abseil-cpp");
-  candidates.push_back(filesystem::path("..") / ".." / "abseil-cpp");
-  candidates.push_back(filesystem::path(__FILE__).parent_path().parent_path() /
-                       "abseil-cpp");
-
-  for (const filesystem::path& candidate : candidates) {
-    filesystem::path absolutePath = filesystem::absolute(candidate);
-    if (filesystem::is_directory(absolutePath)) {
-      return absolutePath;
-    }
-  }
-
-  return {};
+  candidates.push_back(path("..") / "abseil-cpp");
+  candidates.push_back(path("..") / ".." / "abseil-cpp");
+  return findFirstExisting(candidates, true);
 }
 
-string readFile(const filesystem::path& filePath) {
+string readFile(const path& filePath) {
   ifstream input(filePath);
   stringstream buffer;
   buffer << input.rdbuf();
@@ -202,35 +99,34 @@ bool isIdentifierChar(char c) {
 }
 
 string extractFunctionSource(const string& source, const string& functionName) {
-  const string signatureNeedle = functionName + "(";
-  size_t namePos = source.find(signatureNeedle);
+  string signature = functionName + "(";
+  int namePos = source.find(signature);
 
   while (namePos != string::npos) {
     if (namePos > 0 && isIdentifierChar(source[namePos - 1])) {
-      namePos = source.find(signatureNeedle, namePos + signatureNeedle.length());
+      namePos = source.find(signature, namePos + signature.length());
       continue;
     }
 
-    size_t bracePos = source.find('{', namePos);
+    int bracePos = source.find('{', namePos);
     if (bracePos == string::npos) {
       return "";
     }
 
     int depth = 0;
-    size_t endPos = bracePos;
-    for (; endPos < source.size(); endPos++) {
-      if (source[endPos] == '{') {
+    for (int i = bracePos; i < source.length(); i++) {
+      if (source[i] == '{') {
         depth++;
-      } else if (source[endPos] == '}') {
+      } else if (source[i] == '}') {
         depth--;
         if (depth == 0) {
-          size_t startPos = source.rfind('\n', namePos);
+          int startPos = source.rfind('\n', namePos);
           if (startPos == string::npos) {
             startPos = 0;
           } else {
             startPos++;
           }
-          return source.substr(startPos, endPos - startPos + 1);
+          return source.substr(startPos, i - startPos + 1);
         }
       }
     }
@@ -246,8 +142,8 @@ string extractTestName(const string& line, const string& prefix) {
     return "";
   }
 
-  string name = line.substr(prefix.size());
-  size_t detailPos = name.find(" (");
+  string name = line.substr(prefix.length());
+  int detailPos = name.find(" (");
   if (detailPos != string::npos) {
     name = name.substr(0, detailPos);
   }
@@ -259,14 +155,10 @@ map<string, vector<bool>> collectTestResults(const vector<RunResult>& results) {
   map<string, vector<bool>> testResults;
 
   for (const RunResult& result : results) {
-    size_t pos = 0;
-    while (pos < result.output.length()) {
-      size_t newlinePos = result.output.find('\n', pos);
-      if (newlinePos == string::npos) {
-        newlinePos = result.output.length();
-      }
+    istringstream output(result.output);
+    string line;
 
-      string line = result.output.substr(pos, newlinePos - pos);
+    while (getline(output, line)) {
       string testName = extractTestName(line, "PASS: ");
       bool passed = true;
 
@@ -278,8 +170,6 @@ map<string, vector<bool>> collectTestResults(const vector<RunResult>& results) {
       if (!testName.empty()) {
         testResults[testName].push_back(passed);
       }
-
-      pos = newlinePos + 1;
     }
   }
 
@@ -295,31 +185,33 @@ vector<string> collectCauseMessages(const StaticAnalysisReport& report) {
       continue;
     }
 
-    string message = finding.message;
-    if (seen.insert(message).second) {
-      causes.push_back(message);
+    if (seen.insert(finding.message).second) {
+      causes.push_back(finding.message);
     }
   }
 
   return causes;
 }
 
-StaticContext analyzeStaticContext(const filesystem::path& sourcePath,
-                                   const map<string, vector<bool>>& testResults) {
+StaticContext analyzeStaticContext(
+    const path& sourcePath, const map<string, vector<bool>>& testResults) {
   StaticContext context;
-  if (sourcePath.empty() || !filesystem::exists(sourcePath)) {
+  if (sourcePath.empty() || !exists(sourcePath)) {
     return context;
   }
 
   StaticAnalyzer analyzer;
   string sourceCode = readFile(sourcePath);
+
   context.available = true;
   context.sourcePath = sourcePath;
-  context.fileReport = analyzer.analyzeSourceCode(sourcePath.string(), sourceCode);
+  context.fileReport =
+      analyzer.analyzeSourceCode(sourcePath.string(), sourceCode);
 
   for (const auto& entry : testResults) {
     const string& testName = entry.first;
     string functionSource = extractFunctionSource(sourceCode, testName);
+
     if (functionSource.empty()) {
       context.riskByTest[testName] = context.fileReport.mlRiskScore;
       continue;
@@ -334,102 +226,38 @@ StaticContext analyzeStaticContext(const filesystem::path& sourcePath,
   return context;
 }
 
-void applyFilters(vector<FlakinessScore>& scores, const CliOptions& options) {
-  string filterLower = toLowerCopy(options.nameFilter);
-
-  scores.erase(remove_if(scores.begin(), scores.end(),
-                         [&](const FlakinessScore& score) {
-                           if (score.totalRuns < options.minRuns) {
-                             return true;
-                           }
-
-                           if (!filterLower.empty()) {
-                             return toLowerCopy(score.testName).find(filterLower) ==
-                                    string::npos;
-                           }
-
-                           return false;
-                         }),
-               scores.end());
+bool compareByRanking(const FlakinessScore& a, const FlakinessScore& b) {
+  return a.rankingScore > b.rankingScore;
 }
 
-void sortScores(vector<FlakinessScore>& scores, const string& sortBy) {
-  if (sortBy == "name") {
-    sort(scores.begin(), scores.end(),
-         [](const FlakinessScore& a, const FlakinessScore& b) {
-           return a.testName < b.testName;
-         });
-    return;
-  }
-
-  if (sortBy == "coefficient") {
-    sort(scores.begin(), scores.end(),
-         [](const FlakinessScore& a, const FlakinessScore& b) {
-           return a.coefficient > b.coefficient;
-         });
-    return;
-  }
-
-  if (sortBy == "wilson") {
-    sort(scores.begin(), scores.end(),
-         [](const FlakinessScore& a, const FlakinessScore& b) {
-           return a.wilsonScore < b.wilsonScore;
-         });
-    return;
-  }
-
-  if (sortBy == "transition" || sortBy == "transitions") {
-    sort(scores.begin(), scores.end(),
-         [](const FlakinessScore& a, const FlakinessScore& b) {
-           return a.transitionRate > b.transitionRate;
-         });
-    return;
-  }
-
-  if (sortBy == "static" || sortBy == "risk") {
-    sort(scores.begin(), scores.end(),
-         [](const FlakinessScore& a, const FlakinessScore& b) {
-           return a.staticRiskScore > b.staticRiskScore;
-         });
-    return;
-  }
-
-  sort(scores.begin(), scores.end(),
-       [](const FlakinessScore& a, const FlakinessScore& b) {
-         return a.rankingScore > b.rankingScore;
-       });
+void sortScores(vector<FlakinessScore>& scores) {
+  sort(scores.begin(), scores.end(), compareByRanking);
 }
 
 string buildCombinedReport(const vector<FlakinessScore>& scores,
                            const CliOptions& options,
-                           const StaticContext& staticContext,
-                           ReportGenerator& reportGenerator) {
+                           const StaticContext& staticContext) {
+  ReportGenerator generator;
   vector<FlakinessScore> reportScores = scores;
-  string report = reportGenerator.generateTextReport(reportScores);
+  string report = generator.generateTextReport(reportScores);
 
   report += "\nAnalysis Settings\n";
   report += "Runs Requested: " + to_string(options.runs) + "\n";
-  report += "Minimum Run Filter: " + to_string(options.minRuns) + "\n";
-  report += "Name Filter: " +
-            (options.nameFilter.empty() ? string("<none>") : options.nameFilter) +
-            "\n";
-  report += "Sort Order: " + options.sortBy + "\n";
+  report += "Sort Order: ranking\n";
 
+  report += "\nStatic Analysis Summary\n";
   if (!staticContext.available) {
-    report += "\nStatic Analysis Summary\n";
     report += "No source file was found for static analysis.\n";
     return report;
   }
 
-  report += "\nStatic Analysis Summary\n";
   report += "Source File: " + staticContext.sourcePath.string() + "\n";
   report += "Predicted File Risk: ";
-  {
-    stringstream line;
-    line << fixed << setprecision(4) << staticContext.fileReport.mlRiskScore
-         << " (" << staticContext.fileReport.riskCategory << ")";
-    report += line.str();
-  }
+
+  stringstream line;
+  line << fixed << setprecision(4) << staticContext.fileReport.mlRiskScore
+       << " (" << staticContext.fileReport.riskCategory << ")";
+  report += line.str();
   report += "\nStatic Findings: " +
             to_string((int)(staticContext.fileReport.findings.size())) + "\n";
 
@@ -442,13 +270,14 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
   }
 
   report += "\nRoot Cause Correlation\n";
-  bool emittedCorrelation = false;
+  bool foundMatch = false;
+
   for (const FlakinessScore& score : scores) {
     if (score.likelyCauses.empty()) {
       continue;
     }
 
-    emittedCorrelation = true;
+    foundMatch = true;
     report += score.testName + "\n";
     report += " - Dynamic Category: " + score.category + "\n";
     for (const string& cause : score.likelyCauses) {
@@ -456,73 +285,76 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
     }
   }
 
-  if (!emittedCorrelation) {
+  if (!foundMatch) {
     report += "No per-test static root-cause correlation was found.\n";
   }
 
   return report;
 }
 
-bool hasXmlSet(const filesystem::path& dir, const string& prefix, int runs) {
+bool hasXmlSet(const path& directory, const string& prefix, int runs) {
   for (int i = 1; i <= runs; i++) {
-    if (!filesystem::exists(dir / (prefix + to_string(i) + ".xml"))) {
+    if (!exists(directory / (prefix + to_string(i) + ".xml"))) {
       return false;
     }
   }
+
   return true;
 }
 
-void runTestsAndGenerateXML(const filesystem::path& testExe,
-                            const filesystem::path& outputDir,
+void runTestsAndGenerateXML(const path& testExecutable, const path& outputDir,
                             const string& prefix, int runs) {
   for (int i = 1; i <= runs; i++) {
-    filesystem::path xmlFile = outputDir / (prefix + to_string(i) + ".xml");
-    string command = quotePath(testExe) + " --gtest_output=xml:" +
-                     quotePath(xmlFile) + " > " + nullDevice() + " 2>&1";
+    path xmlFile = outputDir / (prefix + to_string(i) + ".xml");
+    string command = quotePath(testExecutable) +
+                     " --gtest_output=xml:" + quotePath(xmlFile) + " > " +
+                     nullDevice() + " 2>&1";
     cout << "  Test run #" << i << "/" << runs << "...\r" << flush;
     system(command.c_str());
   }
+
   cout << "  Completed " << runs << " runs!\n";
 }
 
-void loadXmlResults(const filesystem::path& dir, const string& prefix, int runs,
+void loadXmlResults(const path& directory, const string& prefix, int runs,
                     const string& label,
                     map<string, vector<bool>>& testResults) {
   cout << "\n[" << label << "]\n";
 
   for (int i = 1; i <= runs; i++) {
-    filesystem::path xmlFile = dir / (prefix + to_string(i) + ".xml");
+    path xmlFile = directory / (prefix + to_string(i) + ".xml");
     XMLParser parser;
 
-    if (parser.parseGoogleTestXML(xmlFile.string())) {
-      cout << "  Parsed run #" << i << "\n";
-
-      vector<TestSuite> suites = parser.getTestSuites();
-      for (const TestSuite& suite : suites) {
-        for (const TestResult& test : suite.testResults) {
-          string fullTestName = suite.name + "." + test.name;
-          testResults[fullTestName].push_back(test.status == "passed");
-        }
-      }
-    } else {
+    if (!parser.parseGoogleTestXML(xmlFile.string())) {
       cout << "  Warning: Could not parse " << label << " run #" << i << "\n";
+      continue;
+    }
+
+    cout << "  Parsed run #" << i << "\n";
+    vector<TestSuite> suites = parser.getTestSuites();
+
+    for (const TestSuite& suite : suites) {
+      for (const TestResult& test : suite.testResults) {
+        string fullTestName = suite.name + "." + test.name;
+        testResults[fullTestName].push_back(test.status == "passed");
+      }
     }
   }
 }
 
-string defaultStaticReportPath(const filesystem::path& sourceFile) {
-  filesystem::path outputDir = "reports";
-  string stem = sourceFile.stem().string();
-  return (outputDir / (stem + "_static_analysis.txt")).string();
+string defaultStaticReportPath(const path& sourceFile) {
+  return (path("reports") /
+          (sourceFile.stem().string() + "_static_analysis.txt"))
+      .string();
 }
 
 int runDynamicDemo(const CliOptions& options) {
   cout << "FlakeHound++ - Test Runner Demo\n";
 
-  filesystem::path executablePath = findExecutablePath(options);
+  path executablePath = findDemoExecutable();
   if (executablePath.empty()) {
-    cerr << "Error: could not find a demo test executable.\n";
-    cerr << "Pass the executable path as the first argument.\n";
+    cerr << "Error: could not find demo_tests.exe or demo_tests.\n";
+    cerr << "Compile the demo test executable first.\n";
     return 1;
   }
 
@@ -547,27 +379,21 @@ int runDynamicDemo(const CliOptions& options) {
     return 1;
   }
 
-  filesystem::path sourcePath = findSourcePath(options, executablePath);
+  path sourcePath = findDemoSource();
   StaticContext staticContext = analyzeStaticContext(sourcePath, testResults);
 
+  cout << "Static analysis source: ";
   if (staticContext.available) {
-    cout << "Static analysis source: " << staticContext.sourcePath.string()
-         << "\n";
+    cout << staticContext.sourcePath.string() << "\n";
   } else {
-    cout << "Static analysis source: not found\n";
+    cout << "not found\n";
   }
 
   FlakinessCalculator calculator;
   vector<FlakinessScore> scores = calculator.calculateForAllTests(
       testResults, staticContext.riskByTest, staticContext.causesByTest);
 
-  applyFilters(scores, options);
-  sortScores(scores, options.sortBy);
-
-  if (scores.empty()) {
-    cerr << "Error: filters removed all tests from the report.\n";
-    return 1;
-  }
+  sortScores(scores);
 
   cout << "Flakiness Analysis\n\n";
   for (const FlakinessScore& score : scores) {
@@ -578,22 +404,19 @@ int runDynamicDemo(const CliOptions& options) {
   }
   cout << "\n";
 
-  ReportGenerator reportGenerator;
-  string reportText =
-      buildCombinedReport(scores, options, staticContext, reportGenerator);
-  reportGenerator.saveTextReport(options.reportPath, reportText);
+  ReportGenerator generator;
+  string reportText = buildCombinedReport(scores, options, staticContext);
+  generator.saveTextReport(options.reportPath, reportText);
 
   cout << "FlakeHound++ Analysis Complete!\n";
   cout << "Report: " << options.reportPath << "\n";
-
   return 0;
 }
 
-int runStaticAnalysis(const filesystem::path& sourceFile,
-                      const string& reportPath) {
+int runStaticAnalysis(const path& sourceFile, const string& reportPath) {
   cout << "FlakeHound++ - Static Analysis\n\n";
 
-  if (sourceFile.empty() || !filesystem::exists(sourceFile)) {
+  if (sourceFile.empty() || !exists(sourceFile)) {
     cerr << "Error: source file not found.\n";
     return 1;
   }
@@ -609,32 +432,29 @@ int runStaticAnalysis(const filesystem::path& sourceFile,
 
   cout << "Static analysis complete!\n";
   cout << "Report: " << reportPath << "\n";
-
   return 0;
 }
 
-int runAbseilAnalysis(int runs, const filesystem::path& reportPath) {
+int runAbseilAnalysis(int runs, const path& reportPath) {
   cout << "FlakeHound++ - Abseil Test Analysis\n\n";
 
-  filesystem::path abseilDir = findAbseilDirectory();
+  path abseilDir = findAbseilDirectory();
   if (abseilDir.empty()) {
     cerr << "Error: could not find the abseil-cpp directory.\n";
     return 1;
   }
 
-  filesystem::path asciiExe = abseilDir / "absl_ascii_test.exe";
-  filesystem::path bernoulliExe = abseilDir / "absl_bernoulli_test.exe";
-
+  path asciiExe = abseilDir / "absl_ascii_test.exe";
+  path bernoulliExe = abseilDir / "absl_bernoulli_test.exe";
   bool haveAsciiXml = hasXmlSet(abseilDir, "run_", runs);
   bool haveBernoulliXml = hasXmlSet(abseilDir, "bernoulli_run_", runs);
 
   cout << "Step 1: Preparing XML inputs...\n";
   if (haveAsciiXml && haveBernoulliXml) {
     cout << "Using existing XML files in " << abseilDir.string() << "\n";
-  } else if (filesystem::exists(asciiExe) && filesystem::exists(bernoulliExe)) {
+  } else if (exists(asciiExe) && exists(bernoulliExe)) {
     cout << "[ASCII Tests - " << runs << " runs]\n";
     runTestsAndGenerateXML(asciiExe, abseilDir, "run_", runs);
-
     cout << "\n[Bernoulli Tests - " << runs << " runs]\n";
     runTestsAndGenerateXML(bernoulliExe, abseilDir, "bernoulli_run_", runs);
   } else {
@@ -666,7 +486,6 @@ int runAbseilAnalysis(int runs, const filesystem::path& reportPath) {
 
   cout << "\nAbseil Analysis Complete!\n";
   cout << "Report: " << reportPath.string() << "\n";
-
   return 0;
 }
 
@@ -676,8 +495,8 @@ void printMenu() {
   cout << "2. Run demo static analysis only\n";
   cout << "3. Run Abseil dynamic XML analysis only\n";
   cout << "4. Run everything\n";
-  cout << "0. Exit\n";
-  cout << "\nChoose an option: ";
+  cout << "0. Exit\n\n";
+  cout << "Choose an option: ";
 }
 
 int runMenu() {
@@ -694,8 +513,6 @@ int runMenu() {
 
     if (choice == "1") {
       CliOptions options;
-      options.runs = 8;
-      options.reportPath = (filesystem::path("reports") / "flakiness_report.txt").string();
       int result = runDynamicDemo(options);
       cout << "\n";
       if (result != 0) {
@@ -705,9 +522,9 @@ int runMenu() {
     }
 
     if (choice == "2") {
-      filesystem::path demoSource = findDemoSourcePath();
-      string reportPath = defaultStaticReportPath(demoSource);
-      int result = runStaticAnalysis(demoSource, reportPath);
+      path demoSource = findDemoSource();
+      int result =
+          runStaticAnalysis(demoSource, defaultStaticReportPath(demoSource));
       cout << "\n";
       if (result != 0) {
         return result;
@@ -717,7 +534,7 @@ int runMenu() {
 
     if (choice == "3") {
       int result = runAbseilAnalysis(
-          20, filesystem::path("reports") / "abseil_flakiness_report.txt");
+          20, path("reports") / "abseil_flakiness_report.txt");
       cout << "\n";
       if (result != 0) {
         return result;
@@ -727,22 +544,21 @@ int runMenu() {
 
     if (choice == "4") {
       CliOptions options;
-      options.runs = 8;
-      options.reportPath = (filesystem::path("reports") / "flakiness_report.txt").string();
 
       int result = runDynamicDemo(options);
       if (result != 0) {
         return result;
       }
 
-      filesystem::path demoSource = findDemoSourcePath();
-      result = runStaticAnalysis(demoSource, defaultStaticReportPath(demoSource));
+      path demoSource = findDemoSource();
+      result =
+          runStaticAnalysis(demoSource, defaultStaticReportPath(demoSource));
       if (result != 0) {
         return result;
       }
 
       result = runAbseilAnalysis(
-          20, filesystem::path("reports") / "abseil_flakiness_report.txt");
+          20, path("reports") / "abseil_flakiness_report.txt");
       if (result != 0) {
         return result;
       }
@@ -755,11 +571,4 @@ int runMenu() {
   }
 }
 
-int main(int argc, char* argv[]) {
-  if (argc == 1) {
-    return runMenu();
-  }
-
-  CliOptions options = parseArguments(argc, argv);
-  return runDynamicDemo(options);
-}
+int main() { return runMenu(); }

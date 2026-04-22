@@ -7,21 +7,20 @@ using namespace std;
 
 LogisticRegressionSGD::LogisticRegressionSGD() : bias(0.0) {}
 
-LogisticRegressionSGD::LogisticRegressionSGD(size_t featureCount) : bias(0.0) {
+LogisticRegressionSGD::LogisticRegressionSGD(int featureCount) : bias(0.0) {
   initialize(featureCount);
 }
 
 LogisticRegressionSGD::~LogisticRegressionSGD() {}
 
-void LogisticRegressionSGD::initialize(size_t featureCount) {
+void LogisticRegressionSGD::initialize(int featureCount) {
   weights.assign(featureCount, 0.0);
   bias = 0.0;
 }
 
 void LogisticRegressionSGD::train(const vector<vector<double>>& features,
                                   const vector<int>& labels, int epochs,
-                                  double learningRate,
-                                  double regularization) {
+                                  double learningRate, double regularization) {
   if (features.empty() || labels.empty() || features.size() != labels.size()) {
     return;
   }
@@ -37,14 +36,14 @@ void LogisticRegressionSGD::train(const vector<vector<double>>& features,
   }
 
   for (int epoch = 0; epoch < epochs; epoch++) {
-    for (size_t i = 0; i < features.size(); i++) {
+    for (int i = 0; i < features.size(); i++) {
       const vector<double>& sample = features[i];
       double prediction = predictProbability(sample);
       double error = prediction - labels[i];
 
-      for (size_t j = 0; j < weights.size(); j++) {
-        weights[j] -= learningRate * (error * sample[j] +
-                                      regularization * weights[j]);
+      for (int j = 0; j < weights.size(); j++) {
+        weights[j] -=
+            learningRate * (error * sample[j] + regularization * weights[j]);
       }
       bias -= learningRate * error;
     }
@@ -78,8 +77,8 @@ double LogisticRegressionSGD::sigmoid(double x) {
 double LogisticRegressionSGD::linearScore(
     const vector<double>& features) const {
   double score = bias;
-  size_t count = min(weights.size(), features.size());
-  for (size_t i = 0; i < count; i++) {
+  int count = min(weights.size(), features.size());
+  for (int i = 0; i < count; i++) {
     score += weights[i] * features[i];
   }
   return score;

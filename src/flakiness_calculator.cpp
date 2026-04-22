@@ -12,7 +12,7 @@ vector<double> buildRankingFeatures(const FlakinessScore& score) {
       score.totalRuns > 0 ? (double)(score.failures) / score.totalRuns : 0.0;
   double runCoverage = min(1.0, (double)(score.totalRuns) / 10.0);
 
-  return {score.coefficient, score.transitionRate, failRate,
+  return {score.coefficient,       score.transitionRate,         failRate,
           1.0 - score.wilsonScore, score.staticRiskScore * 0.25, runCoverage};
 }
 
@@ -31,7 +31,8 @@ FlakinessScore FlakinessCalculator::calculateFlakiness(
   score.passes = 0;
   score.failures = 0;
   score.transitions = countTransitions(testResults);
-  score.transitionRate = computeTransitionRate(score.transitions, score.totalRuns);
+  score.transitionRate =
+      computeTransitionRate(score.transitions, score.totalRuns);
   score.staticRiskScore = staticRiskScore;
   score.rankingScore = 0.0;
   score.likelyCauses = likelyCauses;
@@ -82,8 +83,7 @@ vector<FlakinessScore> FlakinessCalculator::calculateForAllTests(
       causes = causesIt->second;
     }
 
-    scores.push_back(
-        calculateFlakiness(testName, results, staticRisk, causes));
+    scores.push_back(calculateFlakiness(testName, results, staticRisk, causes));
   }
 
   sort(scores.begin(), scores.end(),
@@ -106,16 +106,11 @@ void FlakinessCalculator::initializeRankingModel() {
   }
 
   vector<vector<double>> features = {
-      {0.00, 0.00, 0.00, 0.05, 0.00, 1.0},
-      {0.05, 0.00, 0.05, 0.10, 0.02, 0.8},
-      {0.10, 0.10, 0.05, 0.15, 0.03, 0.8},
-      {0.00, 0.00, 1.00, 1.00, 0.02, 1.0},
-      {0.00, 0.00, 0.00, 0.20, 0.20, 1.0},
-      {0.35, 0.30, 0.30, 0.35, 0.05, 0.8},
-      {0.45, 0.50, 0.40, 0.40, 0.08, 1.0},
-      {0.60, 0.65, 0.50, 0.45, 0.10, 1.0},
-      {0.75, 0.75, 0.50, 0.35, 0.12, 1.0},
-      {0.25, 0.30, 0.15, 0.25, 0.18, 0.8}};
+      {0.00, 0.00, 0.00, 0.05, 0.00, 1.0}, {0.05, 0.00, 0.05, 0.10, 0.02, 0.8},
+      {0.10, 0.10, 0.05, 0.15, 0.03, 0.8}, {0.00, 0.00, 1.00, 1.00, 0.02, 1.0},
+      {0.00, 0.00, 0.00, 0.20, 0.20, 1.0}, {0.35, 0.30, 0.30, 0.35, 0.05, 0.8},
+      {0.45, 0.50, 0.40, 0.40, 0.08, 1.0}, {0.60, 0.65, 0.50, 0.45, 0.10, 1.0},
+      {0.75, 0.75, 0.50, 0.35, 0.12, 1.0}, {0.25, 0.30, 0.15, 0.25, 0.18, 0.8}};
   vector<int> labels = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
 
   rankingModel.initialize(features.front().size());
@@ -146,7 +141,8 @@ double FlakinessCalculator::computeWilsonScore(int passes, int totalRuns,
   return wilsonScore;
 }
 
-int FlakinessCalculator::countTransitions(const vector<bool>& testResults) const {
+int FlakinessCalculator::countTransitions(
+    const vector<bool>& testResults) const {
   if (testResults.size() < 2) {
     return 0;
   }

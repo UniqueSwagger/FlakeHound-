@@ -133,12 +133,12 @@ CFGGenerator::CFGFragment CFGGenerator::buildFragment(ASTNode* astNode) {
       CFGNode* conditionNode = createCFGNode(astNode, describeNode(astNode));
       CFGNode* mergeNode = createCFGNode(nullptr, "if_merge");
 
-      CFGFragment thenBranch =
-          astNode->children.size() > 1 ? buildFragment(astNode->children[1])
-                                       : CFGFragment{nullptr, {}};
-      CFGFragment elseBranch =
-          astNode->children.size() > 2 ? buildFragment(astNode->children[2])
-                                       : CFGFragment{nullptr, {}};
+      CFGFragment thenBranch = astNode->children.size() > 1
+                                   ? buildFragment(astNode->children[1])
+                                   : CFGFragment{nullptr, {}};
+      CFGFragment elseBranch = astNode->children.size() > 2
+                                   ? buildFragment(astNode->children[2])
+                                   : CFGFragment{nullptr, {}};
 
       if (thenBranch.entry) {
         conditionNode->successors.push_back(thenBranch.entry);
@@ -160,9 +160,9 @@ CFGGenerator::CFGFragment CFGGenerator::buildFragment(ASTNode* astNode) {
     case NODE_WHILE: {
       CFGNode* conditionNode = createCFGNode(astNode, describeNode(astNode));
       CFGNode* afterLoopNode = createCFGNode(nullptr, "while_exit");
-      CFGFragment body =
-          astNode->children.size() > 1 ? buildFragment(astNode->children[1])
-                                       : CFGFragment{nullptr, {}};
+      CFGFragment body = astNode->children.size() > 1
+                             ? buildFragment(astNode->children[1])
+                             : CFGFragment{nullptr, {}};
 
       if (body.entry) {
         conditionNode->successors.push_back(body.entry);
@@ -174,16 +174,16 @@ CFGGenerator::CFGFragment CFGGenerator::buildFragment(ASTNode* astNode) {
     }
 
     case NODE_FOR: {
-      CFGFragment init =
-          !astNode->children.empty() ? buildFragment(astNode->children[0])
-                                     : CFGFragment{nullptr, {}};
+      CFGFragment init = !astNode->children.empty()
+                             ? buildFragment(astNode->children[0])
+                             : CFGFragment{nullptr, {}};
       CFGNode* conditionNode = createCFGNode(astNode, describeNode(astNode));
-      CFGFragment update =
-          astNode->children.size() > 2 ? buildFragment(astNode->children[2])
-                                       : CFGFragment{nullptr, {}};
-      CFGFragment body =
-          astNode->children.size() > 3 ? buildFragment(astNode->children[3])
-                                       : CFGFragment{nullptr, {}};
+      CFGFragment update = astNode->children.size() > 2
+                               ? buildFragment(astNode->children[2])
+                               : CFGFragment{nullptr, {}};
+      CFGFragment body = astNode->children.size() > 3
+                             ? buildFragment(astNode->children[3])
+                             : CFGFragment{nullptr, {}};
       CFGNode* afterLoopNode = createCFGNode(nullptr, "for_exit");
 
       if (init.entry) {
@@ -243,8 +243,8 @@ int CFGGenerator::countReachableNodes(CFGNode* node) {
   return countReachableNodesRecursively(node, visited);
 }
 
-int CFGGenerator::countReachableNodesRecursively(
-    CFGNode* node, unordered_set<int>& visited) {
+int CFGGenerator::countReachableNodesRecursively(CFGNode* node,
+                                                 unordered_set<int>& visited) {
   if (!node || visited.count(node->id)) {
     return 0;
   }

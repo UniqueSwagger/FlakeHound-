@@ -9,10 +9,10 @@ using namespace std;
 class LogisticRegressionSGD {
  public:
   LogisticRegressionSGD();
-  explicit LogisticRegressionSGD(size_t featureCount);
+  explicit LogisticRegressionSGD(int featureCount);
   ~LogisticRegressionSGD();
 
-  void initialize(size_t featureCount);
+  void initialize(int featureCount);
   void train(const vector<vector<double>>& features, const vector<int>& labels,
              int epochs = 400, double learningRate = 0.05,
              double regularization = 0.001);

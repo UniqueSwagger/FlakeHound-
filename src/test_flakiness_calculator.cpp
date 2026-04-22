@@ -6,6 +6,7 @@
 #include "flakliness_calculator.h"
 
 using namespace std;
+using namespace std::filesystem;
 
 int main() {
   map<string, vector<bool>> testResults = {
@@ -15,7 +16,8 @@ int main() {
   map<string, double> staticRiskScores = {{"stable_case", 0.10},
                                           {"toggle_case", 0.85}};
   map<string, vector<string>> likelyCauses = {
-      {"toggle_case", {"Randomness detected without any stability guarantees."}}};
+      {"toggle_case",
+       {"Randomness detected without any stability guarantees."}}};
 
   FlakinessCalculator calculator;
   vector<FlakinessScore> scores = calculator.calculateForAllTests(

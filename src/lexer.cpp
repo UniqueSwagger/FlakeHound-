@@ -233,7 +233,9 @@ Token Lexer::nextToken() {
   }
 }
 
-bool Lexer::hasMoreTokens() { return position < static_cast<int>(source.size()); }
+bool Lexer::hasMoreTokens() {
+  return position < static_cast<int>(source.size());
+}
 
 char Lexer::currentChar() {
   if (position >= source.size()) return '\0';
@@ -300,7 +302,8 @@ Token Lexer::readNumber() {
   token.line = line;
   token.column = column;
 
-  while (hasMoreTokens() && isdigit(static_cast<unsigned char>(currentChar()))) {
+  while (hasMoreTokens() &&
+         isdigit(static_cast<unsigned char>(currentChar()))) {
     token.value += currentChar();
     advance();
   }

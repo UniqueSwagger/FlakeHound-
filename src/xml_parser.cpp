@@ -21,7 +21,7 @@ bool XMLParser::parseGoogleTestXML(const string& filename) {
   buffer << file.rdbuf();
   string xml = buffer.str();
 
-  size_t pos = 0;
+  int pos = 0;
   while ((pos = xml.find("<testsuite", pos)) != string::npos) {
     char nextChar = (pos + 10 < xml.size()) ? xml[pos + 10] : '\0';
     if (nextChar != ' ' && nextChar != '>' && nextChar != '\t' &&
@@ -30,10 +30,10 @@ bool XMLParser::parseGoogleTestXML(const string& filename) {
       continue;
     }
 
-    size_t suiteEnd = xml.find("</testsuite>", pos);
+    int suiteEnd = xml.find("</testsuite>", pos);
     if (suiteEnd == string::npos) break;
 
-    size_t tagEnd = xml.find('>', pos);
+    int tagEnd = xml.find('>', pos);
     if (tagEnd == string::npos) break;
 
     string suiteTag = xml.substr(pos, tagEnd - pos + 1);
@@ -46,13 +46,13 @@ bool XMLParser::parseGoogleTestXML(const string& filename) {
     suite.errors = atoi(extractAttribute(suiteTag, "errors").c_str());
     suite.time = atof(extractAttribute(suiteTag, "time").c_str());
 
-    size_t testPos = 0;
+    int testPos = 0;
     while ((testPos = suiteBody.find("<testcase", testPos)) != string::npos) {
-      size_t testTagEnd = suiteBody.find('>', testPos);
+      int testTagEnd = suiteBody.find('>', testPos);
       if (testTagEnd == string::npos) break;
 
-      size_t testClose = suiteBody.find("</testcase>", testPos);
-      size_t selfClose = suiteBody.find("/>", testPos);
+      int testClose = suiteBody.find("</testcase>", testPos);
+      int selfClose = suiteBody.find("/>", testPos);
 
       bool isSelfClosing =
           (selfClose != string::npos && selfClose < testTagEnd &&
@@ -60,7 +60,7 @@ bool XMLParser::parseGoogleTestXML(const string& filename) {
 
       string testTag = suiteBody.substr(testPos, testTagEnd - testPos + 1);
       string testInner = "";
-      size_t nextPos = 0;
+      int nextPos = 0;
 
       if (isSelfClosing) {
         nextPos = selfClose + 2;
@@ -113,10 +113,10 @@ vector<TestResult> XMLParser::getAllTests() const {
 string XMLParser::extractAttribute(const string& line,
                                    const string& attrName) const {
   string pattern = attrName + "=\"";
-  size_t start = line.find(pattern);
+  int start = line.find(pattern);
   if (start == string::npos) return "";
   start += pattern.length();
-  size_t end = line.find('"', start);
+  int end = line.find('"', start);
   if (end == string::npos) return "";
   return line.substr(start, end - start);
 }
@@ -125,10 +125,10 @@ string XMLParser::extractTagContent(const string& xml,
                                     const string& tagName) const {
   string openTag = "<" + tagName + ">";
   string closeTag = "</" + tagName + ">";
-  size_t start = xml.find(openTag);
+  int start = xml.find(openTag);
   if (start == string::npos) return "";
   start += openTag.length();
-  size_t end = xml.find(closeTag, start);
+  int end = xml.find(closeTag, start);
   if (end == string::npos) return "";
   return xml.substr(start, end - start);
 }

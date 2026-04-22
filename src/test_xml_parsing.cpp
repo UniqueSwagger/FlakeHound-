@@ -5,23 +5,23 @@
 #include "xml_parser.h"
 
 using namespace std;
+using namespace std::filesystem;
 
-filesystem::path findXmlFile(int argc, char* argv[]) {
-  vector<filesystem::path> candidates;
+path findXmlFile(int argc, char* argv[]) {
+  vector<path> candidates;
 
   if (argc >= 2) {
     candidates.push_back(argv[1]);
   }
 
-  candidates.push_back(filesystem::path("demo") / "sample_gtest_results.xml");
-  candidates.push_back(filesystem::path("build") / "abseil_test_results.xml");
-  candidates.push_back(filesystem::path("abseil-cpp") / "run_1.xml");
-  candidates.push_back(filesystem::path("..") / "demo" /
-                       "sample_gtest_results.xml");
+  candidates.push_back(path("demo") / "sample_gtest_results.xml");
+  candidates.push_back(path("build") / "abseil_test_results.xml");
+  candidates.push_back(path("abseil-cpp") / "run_1.xml");
+  candidates.push_back(path("..") / "demo" / "sample_gtest_results.xml");
 
-  for (const filesystem::path& candidate : candidates) {
-    filesystem::path absolutePath = filesystem::absolute(candidate);
-    if (filesystem::exists(absolutePath)) {
+  for (const path& candidate : candidates) {
+    path absolutePath = absolute(candidate);
+    if (exists(absolutePath)) {
       return absolutePath;
     }
   }
@@ -32,7 +32,7 @@ filesystem::path findXmlFile(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
   cout << "Testing XMLParser on GoogleTest XML output\n\n";
 
-  filesystem::path xmlFile = findXmlFile(argc, argv);
+  path xmlFile = findXmlFile(argc, argv);
   if (xmlFile.empty()) {
     cout << "Failed to locate a GoogleTest XML file.\n";
     return 1;

@@ -145,10 +145,11 @@ ASTNode* ASTBuilder::parseBlock() {
 
   ASTNode* block = new ASTNode(NODE_BLOCK, "block", currentToken().line);
   while (!isAtEnd() && !check(TOKEN_RBRACE)) {
+    int startIndex = currentIndex;
     ASTNode* statement = parseStatement();
     if (statement) {
       block->addChild(statement);
-    } else {
+    } else if (currentIndex == startIndex) {
       advance();
     }
   }
@@ -162,6 +163,7 @@ ASTNode* ASTBuilder::parseProgram() {
 
   while (!isAtEnd()) {
     ASTNode* node = nullptr;
+    int startIndex = currentIndex;
 
     if (isFunctionSignature()) {
       node = parseFunction();
@@ -171,7 +173,7 @@ ASTNode* ASTBuilder::parseProgram() {
 
     if (node) {
       program->addChild(node);
-    } else {
+    } else if (currentIndex == startIndex) {
       advance();
     }
   }
@@ -193,9 +195,9 @@ ASTNode* ASTBuilder::parseFunction() {
     return nullptr;
   }
 
-  ASTNode* functionNode = new ASTNode(
-      NODE_FUNCTION, returnType.value + " " + functionName.value,
-      functionName.line);
+  ASTNode* functionNode =
+      new ASTNode(NODE_FUNCTION, returnType.value + " " + functionName.value,
+                  functionName.line);
 
   while (!isAtEnd() && !check(TOKEN_RPAREN)) {
     Token parameterType = currentToken();
@@ -391,9 +393,8 @@ ASTNode* ASTBuilder::parseVariableDeclaration() {
   }
   advance();
 
-  ASTNode* node =
-      new ASTNode(NODE_VARIABLE, typeToken.value + " " + nameToken.value,
-                  nameToken.line);
+  ASTNode* node = new ASTNode(
+      NODE_VARIABLE, typeToken.value + " " + nameToken.value, nameToken.line);
 
   if (match(TOKEN_ASSIGN)) {
     ASTNode* assignmentNode = new ASTNode(NODE_EXPRESSION, "=", nameToken.line);
@@ -430,8 +431,7 @@ ASTNode* ASTBuilder::parseAssignment() {
   }
 
   if (match(TOKEN_ASSIGN)) {
-    ASTNode* node =
-        new ASTNode(NODE_EXPRESSION, "=", currentToken().line);
+    ASTNode* node = new ASTNode(NODE_EXPRESSION, "=", currentToken().line);
     node->addChild(left);
 
     ASTNode* right = parseAssignment();
@@ -448,8 +448,7 @@ ASTNode* ASTBuilder::parseLogicalOr() {
   ASTNode* left = parseLogicalAnd();
 
   while (match(TOKEN_OR)) {
-    ASTNode* node =
-        new ASTNode(NODE_EXPRESSION, "||", currentToken().line);
+    ASTNode* node = new ASTNode(NODE_EXPRESSION, "||", currentToken().line);
     node->addChild(left);
     node->addChild(parseLogicalAnd());
     left = node;
@@ -462,8 +461,7 @@ ASTNode* ASTBuilder::parseLogicalAnd() {
   ASTNode* left = parseEquality();
 
   while (match(TOKEN_AND)) {
-    ASTNode* node =
-        new ASTNode(NODE_EXPRESSION, "&&", currentToken().line);
+    ASTNode* node = new ASTNode(NODE_EXPRESSION, "&&", currentToken().line);
     node->addChild(left);
     node->addChild(parseEquality());
     left = node;
@@ -491,8 +489,8 @@ ASTNode* ASTBuilder::parseEquality() {
 ASTNode* ASTBuilder::parseComparison() {
   ASTNode* left = parseAdditive();
 
-  while (check(TOKEN_LESS) || check(TOKEN_LESS_EQUAL) ||
-         check(TOKEN_GREATER) || check(TOKEN_GREATER_EQUAL)) {
+  while (check(TOKEN_LESS) || check(TOKEN_LESS_EQUAL) || check(TOKEN_GREATER) ||
+         check(TOKEN_GREATER_EQUAL)) {
     Token op = currentToken();
     advance();
 
@@ -524,8 +522,7 @@ ASTNode* ASTBuilder::parseAdditive() {
 ASTNode* ASTBuilder::parseMultiplicative() {
   ASTNode* left = parseUnary();
 
-  while (check(TOKEN_MULTIPLY) || check(TOKEN_DIVIDE) ||
-         check(TOKEN_MODULO)) {
+  while (check(TOKEN_MULTIPLY) || check(TOKEN_DIVIDE) || check(TOKEN_MODULO)) {
     Token op = currentToken();
     advance();
 
