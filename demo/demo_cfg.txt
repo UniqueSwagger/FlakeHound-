@@ -1,0 +1,158 @@
+CFG Node 0 [bool test_addition] -> 1 
+CFG Node 1 [int a] -> 2 
+CFG Node 2 [int b] -> 3 
+CFG Node 3 [int result] -> 4 
+CFG Node 4 [if] -> 6 9 
+CFG Node 6 [<] -> 7 
+CFG Node 7 [PASS: test_addition\n] -> 8 
+CFG Node 8 [return] -> 
+CFG Node 5 [if_merge] -> 12 
+CFG Node 12 [bool test_string_length] -> 13 
+CFG Node 13 [string text] -> 14 
+CFG Node 14 [int length] -> 15 
+CFG Node 15 [.] -> 16 
+CFG Node 16 [length] -> 17 
+CFG Node 17 [if] -> 19 22 
+CFG Node 19 [<] -> 20 
+CFG Node 20 [PASS: test_string_length\n] -> 21 
+CFG Node 21 [return] -> 
+CFG Node 9 [<] -> 10 
+CFG Node 10 [FAIL: test_addition\n] -> 11 
+CFG Node 11 [return] -> 
+CFG Node 18 [if_merge] -> 25 
+CFG Node 25 [bool test_random_number] -> 26 
+CFG Node 26 [&] -> 27 
+CFG Node 27 [config] -> 28 
+CFG Node 28 [)] -> 29 
+CFG Node 29 [unsigned seed] -> 30 
+CFG Node 30 [chrono] -> 31 
+CFG Node 31 [:] -> 32 
+CFG Node 32 [:] -> 33 
+CFG Node 33 [steady_clock] -> 34 
+CFG Node 34 [:] -> 35 
+CFG Node 35 [:] -> 36 
+CFG Node 36 [now] -> 37 
+CFG Node 37 [.] -> 38 
+CFG Node 38 [time_since_epoch] -> 39 
+CFG Node 39 [.] -> 40 
+CFG Node 40 [count] -> 41 
+CFG Node 41 [)] -> 42 
+CFG Node 42 [srand] -> 43 
+CFG Node 43 [int randomValue] -> 44 
+CFG Node 44 [if] -> 46 45 
+CFG Node 46 [.] -> 45 
+CFG Node 45 [if_merge] -> 47 
+CFG Node 47 [randomPassThreshold] -> 48 
+CFG Node 48 [)] -> 49 
+CFG Node 49 [<] -> 50 
+CFG Node 50 [<] -> 51 
+CFG Node 51 [<] -> 52 
+CFG Node 52 [<] -> 53 
+CFG Node 53 [config] -> 54 
+CFG Node 54 [.] -> 55 
+CFG Node 55 [<] -> 56 
+CFG Node 56 [)\n] -> 57 
+CFG Node 57 [return] -> 
+CFG Node 22 [<] -> 23 
+CFG Node 23 [FAIL: test_string_length\n] -> 24 
+CFG Node 24 [return] -> 
+CFG Node 58 [else] -> 59 
+CFG Node 59 [<] -> 60 
+CFG Node 60 [<] -> 61 
+CFG Node 61 [<] -> 62 
+CFG Node 62 [<] -> 63 
+CFG Node 63 [config] -> 64 
+CFG Node 64 [.] -> 65 
+CFG Node 65 [<] -> 66 
+CFG Node 66 [)\n] -> 67 
+CFG Node 67 [return] -> 
+CFG Node 68 [bool test_timing_based] -> 69 
+CFG Node 69 [&] -> 70 
+CFG Node 70 [config] -> 71 
+CFG Node 71 [)] -> 72 
+CFG Node 72 [int currentTime] -> 73 
+CFG Node 73 [chrono] -> 74 
+CFG Node 74 [:] -> 75 
+CFG Node 75 [:] -> 76 
+CFG Node 76 [high_resolution_clock] -> 77 
+CFG Node 77 [:] -> 78 
+CFG Node 78 [:] -> 79 
+CFG Node 79 [now] -> 80 
+CFG Node 80 [.] -> 81 
+CFG Node 81 [time_since_epoch] -> 82 
+CFG Node 82 [.] -> 83 
+CFG Node 83 [%] -> 84 
+CFG Node 84 [)] -> 85 
+CFG Node 85 [if] -> 87 86 
+CFG Node 87 [.] -> 86 
+CFG Node 86 [if_merge] -> 88 
+CFG Node 88 [timingPassThreshold] -> 89 
+CFG Node 89 [)] -> 90 
+CFG Node 90 [<] -> 91 
+CFG Node 91 [<] -> 92 
+CFG Node 92 [<] -> 93 
+CFG Node 93 [<] -> 94 
+CFG Node 94 [config] -> 95 
+CFG Node 95 [.] -> 96 
+CFG Node 96 [<] -> 97 
+CFG Node 97 [)\n] -> 98 
+CFG Node 98 [return] -> 
+CFG Node 99 [else] -> 100 
+CFG Node 100 [<] -> 101 
+CFG Node 101 [<] -> 102 
+CFG Node 102 [<] -> 103 
+CFG Node 103 [<] -> 104 
+CFG Node 104 [config] -> 105 
+CFG Node 105 [.] -> 106 
+CFG Node 106 [<] -> 107 
+CFG Node 107 [)\n] -> 108 
+CFG Node 108 [return] -> 
+CFG Node 109 [int main] -> 110 
+CFG Node 110 [DemoConfig config] -> 111 
+CFG Node 111 [<] -> 112 
+CFG Node 112 [FlakeHound++ Demo Tests \n\n] -> 113 
+CFG Node 113 [<] -> 114 
+CFG Node 114 [<] -> 115 
+CFG Node 115 [config] -> 116 
+CFG Node 116 [.] -> 117 
+CFG Node 117 [<] -> 118 
+CFG Node 118 [\n] -> 119 
+CFG Node 119 [<] -> 120 
+CFG Node 120 [<] -> 121 
+CFG Node 121 [config] -> 122 
+CFG Node 122 [.] -> 123 
+CFG Node 123 [<] -> 124 
+CFG Node 124 [\n\n] -> 125 
+CFG Node 125 [int passed] -> 126 
+CFG Node 126 [int failed] -> 127 
+CFG Node 127 [if] -> 129 130 
+CFG Node 129 [post++] -> 128 
+CFG Node 128 [if_merge] -> 131 
+CFG Node 131 [if] -> 133 134 
+CFG Node 133 [post++] -> 132 
+CFG Node 132 [if_merge] -> 135 
+CFG Node 135 [if] -> 137 138 
+CFG Node 137 [post++] -> 136 
+CFG Node 136 [if_merge] -> 139 
+CFG Node 139 [if] -> 141 142 
+CFG Node 141 [post++] -> 140 
+CFG Node 140 [if_merge] -> 143 
+CFG Node 143 [<] -> 144 
+CFG Node 144 [\nTest Summary\n] -> 145 
+CFG Node 145 [<] -> 146 
+CFG Node 146 [<] -> 147 
+CFG Node 147 [<] -> 148 
+CFG Node 148 [\n] -> 149 
+CFG Node 149 [<] -> 150 
+CFG Node 150 [<] -> 151 
+CFG Node 151 [<] -> 152 
+CFG Node 152 [\n] -> 153 
+CFG Node 153 [<] -> 154 
+CFG Node 154 [<] -> 155 
+CFG Node 155 [<] -> 156 
+CFG Node 156 [\n] -> 157 
+CFG Node 157 [return] -> 
+CFG Node 130 [post++] -> 128 
+CFG Node 134 [post++] -> 132 
+CFG Node 138 [post++] -> 136 
+CFG Node 142 [post++] -> 140 

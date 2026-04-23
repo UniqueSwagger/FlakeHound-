@@ -1,11 +1,11 @@
 #include <chrono>
 #include <cstdlib>
-#include <ctime>
 #include <iostream>
-#include <vector>
+#include <string>
+
+#include "demo_runtime_config.h"
 
 using namespace std;
-using namespace std::filesystem;
 
 bool test_addition() {
   int a = 5;
@@ -32,59 +32,74 @@ bool test_string_length() {
   }
 }
 
-bool test_random_number() {
+bool test_random_number(const DemoConfig& config) {
   unsigned seed =
       (unsigned)(chrono::steady_clock::now().time_since_epoch().count());
   srand(seed);
-  int random_value = rand() % 10;
+  int randomValue = rand() % 10;
 
-  if (random_value >= 5) {
-    cout << "PASS: test_random_number (got " << random_value << ")\n";
+  if (randomValue >= config.randomPassThreshold) {
+    cout << "PASS: test_random_number (got " << randomValue
+         << ", cutoff " << config.randomPassThreshold << ")\n";
     return true;
   } else {
-    cout << "FAIL: test_random_number (got " << random_value << ")\n";
+    cout << "FAIL: test_random_number (got " << randomValue
+         << ", cutoff " << config.randomPassThreshold << ")\n";
     return false;
   }
 }
 
-bool test_timing_based() {
-  int current_time =
+bool test_timing_based(const DemoConfig& config) {
+  int currentTime =
       (int)(chrono::high_resolution_clock::now().time_since_epoch().count() %
             10);
 
-  if (current_time >= 5) {
-    cout << "PASS: test_timing_based (time mod = " << current_time << ")\n";
+  if (currentTime >= config.timingPassThreshold) {
+    cout << "PASS: test_timing_based (time mod = " << currentTime
+         << ", cutoff " << config.timingPassThreshold << ")\n";
     return true;
   } else {
-    cout << "FAIL: test_timing_based (time mod = " << current_time << ")\n";
+    cout << "FAIL: test_timing_based (time mod = " << currentTime
+         << ", cutoff " << config.timingPassThreshold << ")\n";
     return false;
   }
 }
 
 int main() {
+  DemoConfig config = loadDemoConfig();
+
   cout << "FlakeHound++ Demo Tests \n\n";
+  cout << "Random test cutoff: " << config.randomPassThreshold << "\n";
+  cout << "Timing test cutoff: " << config.timingPassThreshold << "\n\n";
 
   int passed = 0;
   int failed = 0;
 
-  if (test_addition())
+  if (test_addition()) {
     passed++;
-  else
+  } else {
     failed++;
-  if (test_string_length())
-    passed++;
-  else
-    failed++;
-  if (test_random_number())
-    passed++;
-  else
-    failed++;
-  if (test_timing_based())
-    passed++;
-  else
-    failed++;
+  }
 
-  cout << "\n Test Summary \n";
+  if (test_string_length()) {
+    passed++;
+  } else {
+    failed++;
+  }
+
+  if (test_random_number(config)) {
+    passed++;
+  } else {
+    failed++;
+  }
+
+  if (test_timing_based(config)) {
+    passed++;
+  } else {
+    failed++;
+  }
+
+  cout << "\nTest Summary\n";
   cout << "Passed: " << passed << "\n";
   cout << "Failed: " << failed << "\n";
   cout << "Total: " << (passed + failed) << "\n";

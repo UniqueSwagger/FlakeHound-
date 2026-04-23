@@ -1,8 +1,8 @@
-#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -13,20 +13,15 @@
 using namespace std;
 using namespace std::filesystem;
 
-string quotePath(const path& path) { return "\"" + path.string() + "\""; }
+string quotePath(const path& filePath) {
+  return "\"" + filePath.string() + "\"";
+}
 
-path findAbseilDirectory(int argc, char* argv[]) {
+path findAbseilDirectory() {
   vector<path> candidates;
-
-  if (argc >= 2) {
-    candidates.push_back(argv[1]);
-  }
-
   candidates.push_back("abseil-cpp");
   candidates.push_back(path("..") / "abseil-cpp");
   candidates.push_back(path("..") / ".." / "abseil-cpp");
-  candidates.push_back(path(__FILE__).parent_path().parent_path() /
-                       "abseil-cpp");
 
   for (const path& candidate : candidates) {
     path absolutePath = absolute(candidate);
@@ -38,23 +33,43 @@ path findAbseilDirectory(int argc, char* argv[]) {
   return {};
 }
 
-int parseRuns(int argc, char* argv[]) {
-  if (argc >= 3) {
-    int requestedRuns = atoi(argv[2]);
-    if (requestedRuns > 0) {
-      return requestedRuns;
-    }
+bool parseIntegerText(const string& text, int& value) {
+  if (text.empty()) {
+    return false;
   }
 
-  return 20;
+  stringstream input(text);
+  int parsed = 0;
+  char extra = '\0';
+  input >> parsed;
+  if (input.fail() || (input >> extra)) {
+    return false;
+  }
+
+  value = parsed;
+  return true;
 }
 
-path reportPath(int argc, char* argv[]) {
-  if (argc >= 4) {
-    return absolute(argv[3]);
-  }
+int promptIntValue(const string& label, int defaultValue, int minValue,
+                   int maxValue) {
+  while (true) {
+    cout << label << " [" << defaultValue << "]: ";
 
-  return current_path() / "reports" / "abseil_flakiness_report.txt";
+    string input;
+    getline(cin, input);
+    if (input.empty()) {
+      return defaultValue;
+    }
+
+    int value = 0;
+    if (parseIntegerText(input, value) && value >= minValue &&
+        value <= maxValue) {
+      return value;
+    }
+
+    cout << "Enter a value between " << minValue << " and " << maxValue
+         << ".\n";
+  }
 }
 
 bool hasXmlSet(const path& dir, const string& prefix, int runs) {
@@ -104,20 +119,20 @@ void loadXmlResults(const path& dir, const string& prefix, int runs,
   }
 }
 
-int main(int argc, char* argv[]) {
+int main() {
   cout << "FlakeHound++ - Abseil Test Analysis\n\n";
 
-  path abseilDir = findAbseilDirectory(argc, argv);
+  path abseilDir = findAbseilDirectory();
   if (abseilDir.empty()) {
     cerr << "Error: could not find the abseil-cpp directory.\n";
-    cerr << "Pass the path as the first argument if needed.\n";
     return 1;
   }
 
-  int runs = parseRuns(argc, argv);
+  int runs = promptIntValue("How many Abseil runs?", 20, 2, 100);
 
   path asciiExe = abseilDir / "absl_ascii_test.exe";
   path bernoulliExe = abseilDir / "absl_bernoulli_test.exe";
+  path outputReport = current_path() / "reports" / "abseil_flakiness_report.txt";
 
   bool haveAsciiXml = hasXmlSet(abseilDir, "run_", runs);
   bool haveBernoulliXml = hasXmlSet(abseilDir, "bernoulli_run_", runs);
@@ -156,9 +171,10 @@ int main(int argc, char* argv[]) {
   }
 
   ReportGenerator reporter;
-  reporter.generateReport(reportPath(argc, argv).string(), scores);
+  reporter.generateReport(outputReport.string(), scores);
 
   cout << "\nAbseil Analysis Complete!\n";
+  cout << "Report: " << outputReport.string() << "\n";
 
   return 0;
 }

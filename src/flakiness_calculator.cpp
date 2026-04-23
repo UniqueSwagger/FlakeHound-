@@ -7,7 +7,6 @@
 
 using namespace std;
 
-// bujte hobe static analysis features
 vector<double> buildRankingFeatures(const FlakinessScore& score) {
   double failRate =
       score.totalRuns > 0 ? (double)(score.failures) / score.totalRuns : 0.0;
@@ -17,8 +16,9 @@ vector<double> buildRankingFeatures(const FlakinessScore& score) {
           1.0 - score.wilsonScore, score.staticRiskScore * 0.25, runCoverage};
 }
 
-FlakinessCalculator::FlakinessCalculator() {
+FlakinessCalculator::FlakinessCalculator(double threshold) {
   rankingModelReady = false;
+  flakyThreshold = threshold;
   initializeRankingModel();
 }
 
@@ -105,12 +105,15 @@ void FlakinessCalculator::initializeRankingModel() {
     return;
   }
 
+  // Feature order: flakiness coefficient, transition rate, fail rate,
+  // inverse Wilson score, scaled static pre-run risk, run coverage.
   vector<vector<double>> features = {
       {0.00, 0.00, 0.00, 0.05, 0.00, 1.0}, {0.05, 0.00, 0.05, 0.10, 0.02, 0.8},
       {0.10, 0.10, 0.05, 0.15, 0.03, 0.8}, {0.00, 0.00, 1.00, 1.00, 0.02, 1.0},
       {0.00, 0.00, 0.00, 0.20, 0.20, 1.0}, {0.35, 0.30, 0.30, 0.35, 0.05, 0.8},
       {0.45, 0.50, 0.40, 0.40, 0.08, 1.0}, {0.60, 0.65, 0.50, 0.45, 0.10, 1.0},
       {0.75, 0.75, 0.50, 0.35, 0.12, 1.0}, {0.25, 0.30, 0.15, 0.25, 0.18, 0.8}};
+  // Labels: 0 = lower flakiness priority, 1 = higher flakiness priority.
   vector<int> labels = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
 
   rankingModel.initialize(features.front().size());
@@ -187,7 +190,7 @@ string FlakinessCalculator::categorizeFlakiness(int passes, int failures,
     return "always_failing";
   }
 
-  if (coefficient < 0.4) {
+  if (coefficient < flakyThreshold) {
     return "mildly_flaky";
   }
   return "highly_flaky";

@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include "report_generator.h"
 #include "static_analyzer.h"
@@ -15,13 +14,10 @@ string defaultReportPath(const path& sourceFile) {
   return (outputDir / (stem + "_static_analysis.txt")).string();
 }
 
-int main(int argc, char* argv[]) {
-  if (argc < 2) {
-    cerr << "Usage: analyze_static <source-file> [report-file]\n";
-    return 1;
-  }
+int main() {
+  cout << "FlakeHound++ - Static Analysis\n\n";
 
-  path sourceFile = argv[1];
+  path sourceFile = path("demo") / "demo_tests.cpp";
   if (!exists(sourceFile)) {
     cerr << "Error: source file not found: " << sourceFile.string() << "\n";
     return 1;
@@ -34,8 +30,7 @@ int main(int argc, char* argv[]) {
   cout << textReport;
 
   ReportGenerator generator;
-  string outputPath =
-      argc >= 3 ? argv[2] : defaultReportPath(absolute(sourceFile));
+  string outputPath = defaultReportPath(absolute(sourceFile));
   generator.saveTextReport(outputPath, textReport);
 
   return 0;

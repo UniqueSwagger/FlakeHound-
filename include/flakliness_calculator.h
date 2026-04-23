@@ -24,7 +24,7 @@ struct FlakinessScore {
 
 class FlakinessCalculator {
  public:
-  FlakinessCalculator();
+  FlakinessCalculator(double flakyThreshold = 0.4);
 
   FlakinessScore calculateFlakiness(const string& testName,
                                     const vector<bool>& testResults,
@@ -38,6 +38,7 @@ class FlakinessCalculator {
  private:
   LogisticRegressionSGD rankingModel;
   bool rankingModelReady;
+  double flakyThreshold;
 
   void initializeRankingModel();
   double computeWilsonScore(int passes, int totalRuns, double z = 1.96);

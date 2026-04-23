@@ -3,7 +3,7 @@
 #include <iostream>
 
 using namespace std;
-
+// recursive descent parser and syntax tree.
 ASTBuilder::ASTBuilder(vector<Token> tokenList) {
   tokens = tokenList;
   currentIndex = 0;

@@ -1,0 +1,2 @@
+random_threshold=5
+timing_threshold=5

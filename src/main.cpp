@@ -20,9 +20,15 @@
 using namespace std;
 using namespace std::filesystem;
 
+struct DemoRuntimeConfig {
+  int randomPassThreshold = 5;
+  int timingPassThreshold = 5;
+};
+
 struct CliOptions {
   int runs = 8;
   string reportPath = (path("reports") / "flakiness_report.txt").string();
+  DemoRuntimeConfig demoConfig;
 };
 
 struct StaticContext {
@@ -32,6 +38,8 @@ struct StaticContext {
   map<string, double> riskByTest;
   map<string, vector<string>> causesByTest;
 };
+
+const double fixedFlakyThreshold = 0.4;
 
 string quotePath(const path& filePath) {
   return "\"" + filePath.string() + "\"";
@@ -61,7 +69,6 @@ path findDemoExecutable() {
   candidates.push_back("demo_tests");
   candidates.push_back(path("demo") / "demo_tests.exe");
   candidates.push_back(path("demo") / "demo_tests");
-
   return findFirstExisting(candidates);
 }
 
@@ -226,6 +233,20 @@ void sortScores(vector<FlakinessScore>& scores) {
   sort(scores.begin(), scores.end(), compareByRanking);
 }
 
+bool saveDemoRuntimeConfig(const DemoRuntimeConfig& config) {
+  path configPath = path("demo") / "demo_runtime_config.txt";
+  create_directories(configPath.parent_path());
+
+  ofstream output(configPath);
+  if (!output.is_open()) {
+    return false;
+  }
+
+  output << "random_threshold=" << config.randomPassThreshold << "\n";
+  output << "timing_threshold=" << config.timingPassThreshold << "\n";
+  return true;
+}
+
 string buildCombinedReport(const vector<FlakinessScore>& scores,
                            const CliOptions& options,
                            const StaticContext& staticContext) {
@@ -235,6 +256,11 @@ string buildCombinedReport(const vector<FlakinessScore>& scores,
 
   report += "\nAnalysis Settings\n";
   report += "Runs Requested: " + to_string(options.runs) + "\n";
+  report += "Flakiness Threshold: 0.40\n";
+  report += "\nRandom Demo Pass Cutoff: " +
+            to_string(options.demoConfig.randomPassThreshold) + "\n";
+  report += "Timing Demo Pass Cutoff: " +
+            to_string(options.demoConfig.timingPassThreshold) + "\n";
   report += "Sort Order: ranking\n";
 
   report += "\nStatic Analysis Summary\n";
@@ -340,6 +366,67 @@ string defaultStaticReportPath(const path& sourceFile) {
       .string();
 }
 
+bool parseIntegerText(const string& text, int& value) {
+  if (text.empty()) {
+    return false;
+  }
+
+  stringstream input(text);
+  int parsed = 0;
+  char extra = '\0';
+  input >> parsed;
+  if (input.fail() || (input >> extra)) {
+    return false;
+  }
+
+  value = parsed;
+  return true;
+}
+
+int promptIntValue(const string& label, int defaultValue, int minValue,
+                   int maxValue) {
+  while (true) {
+    cout << label << " [" << defaultValue << "]: ";
+
+    string input;
+    getline(cin, input);
+    if (input.empty()) {
+      return defaultValue;
+    }
+
+    int value = 0;
+    if (parseIntegerText(input, value) && value >= minValue &&
+        value <= maxValue) {
+      return value;
+    }
+
+    cout << "Enter a value between " << minValue << " and " << maxValue
+         << ".\n";
+  }
+}
+
+CliOptions promptDemoOptions() {
+  CliOptions options;
+  cout << "\nDemo Analysis Settings\n";
+  cout << "Press Enter to keep the default value.\n";
+  options.runs =
+      promptIntValue("How many times should the demo test suite run?", 8, 2, 100);
+  options.demoConfig.randomPassThreshold = promptIntValue(
+      "From which random value should test_random_number pass? (0-9)", 5, 0,
+      9);
+  options.demoConfig.timingPassThreshold = promptIntValue(
+      "From which time-mod value should test_timing_based pass? (0-9)", 5, 0,
+      9);
+  return options;
+}
+
+int promptAbseilRuns(int defaultRuns = 20) {
+  cout << "\nAbseil Analysis Settings\n";
+  cout << "Press Enter to keep the default value.\n";
+  return promptIntValue("How many runs for Abseil XML analysis?", defaultRuns,
+                        2, 100);
+}
+
 int runDynamicDemo(const CliOptions& options) {
   cout << "FlakeHound++ - Test Runner Demo\n";
 
@@ -349,6 +436,13 @@ int runDynamicDemo(const CliOptions& options) {
     cerr << "Compile the demo test executable first.\n";
     return 1;
   }
+
+  if (!saveDemoRuntimeConfig(options.demoConfig)) {
+    cerr << "Error: could not save demo runtime settings.\n";
+    return 1;
+  }
+
+  cout << "Demo runtime config saved to demo/demo_runtime_config.txt\n";
 
   TestRunner runner(quotePath(executablePath));
   vector<RunResult> results = runner.runMultipleTimes(options.runs);
@@ -381,13 +475,16 @@ int runDynamicDemo(const CliOptions& options) {
     cout << "not found\n";
   }
 
-  FlakinessCalculator calculator;
+  FlakinessCalculator calculator(fixedFlakyThreshold);
   vector<FlakinessScore> scores = calculator.calculateForAllTests(
       testResults, staticContext.riskByTest, staticContext.causesByTest);
 
   sortScores(scores);
 
   cout << "Flakiness Analysis\n\n";
+  cout << "Threshold used: coefficient < " << fixed << setprecision(2)
+       << fixedFlakyThreshold
+       << " => mildly_flaky, otherwise highly_flaky\n";
   for (const FlakinessScore& score : scores) {
     cout << score.testName << ": PASSED " << score.passes << "/"
          << score.totalRuns << " times (Category: " << score.category
@@ -464,10 +561,13 @@ int runAbseilAnalysis(int runs, const path& reportPath) {
 
   cout << "\nAnalyzing " << testResults.size() << " unique tests...\n\n";
 
-  FlakinessCalculator calculator;
+  FlakinessCalculator calculator(fixedFlakyThreshold);
   vector<FlakinessScore> scores = calculator.calculateForAllTests(testResults);
 
   cout << "Flakiness Summary:\n";
+  cout << "Threshold used: coefficient < " << fixed << setprecision(2)
+       << fixedFlakyThreshold
+       << " => mildly_flaky, otherwise highly_flaky\n";
   for (const FlakinessScore& score : scores) {
     cout << "  " << score.testName << ": " << score.passes << "/"
          << score.totalRuns << " (" << score.category << ")\n";
@@ -504,7 +604,7 @@ int runMenu() {
     }
 
     if (choice == "1") {
-      CliOptions options;
+      CliOptions options = promptDemoOptions();
       int result = runDynamicDemo(options);
       cout << "\n";
       if (result != 0) {
@@ -525,8 +625,9 @@ int runMenu() {
     }
 
     if (choice == "3") {
-      int result = runAbseilAnalysis(
-          20, path("reports") / "abseil_flakiness_report.txt");
+      int runs = promptAbseilRuns(20);
+      int result =
+          runAbseilAnalysis(runs, path("reports") / "abseil_flakiness_report.txt");
       cout << "\n";
       if (result != 0) {
         return result;
@@ -535,7 +636,8 @@ int runMenu() {
     }
 
     if (choice == "4") {
-      CliOptions options;
+      CliOptions options = promptDemoOptions();
+      int abseilRuns = promptAbseilRuns(20);
 
       int result = runDynamicDemo(options);
       if (result != 0) {
@@ -550,7 +652,7 @@ int runMenu() {
       }
 
       result = runAbseilAnalysis(
-          20, path("reports") / "abseil_flakiness_report.txt");
+          abseilRuns, path("reports") / "abseil_flakiness_report.txt");
       if (result != 0) {
         return result;
       }
@@ -563,4 +665,6 @@ int runMenu() {
   }
 }
 
-int main() { return runMenu(); }
+int main() {
+  return runMenu();
+}

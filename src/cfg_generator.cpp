@@ -223,20 +223,30 @@ CFGGenerator::CFGFragment CFGGenerator::buildFragment(ASTNode* astNode) {
 }
 
 void CFGGenerator::printCFG(CFGNode* node, unordered_set<int>& visited) {
-  if (!node || visited.count(node->id)) {
+  if (node && !visited.count(node->id)) {
+    visited.insert(node->id);
+    cout << "CFG Node " << node->id << " [" << node->label << "] -> ";
+
+    for (CFGNode* successor : node->successors) {
+      cout << successor->id << " ";
+    }
+    cout << endl;
+
+    for (CFGNode* successor : node->successors) {
+      printCFG(successor, visited);
+    }
+  }
+
+  if (!node) {
     return;
   }
 
-  visited.insert(node->id);
-  cout << "CFG Node " << node->id << " [" << node->label << "] -> ";
+  for (CFGNode* extraNode : allNodes) {
+    if (visited.count(extraNode->id)) {
+      continue;
+    }
 
-  for (CFGNode* successor : node->successors) {
-    cout << successor->id << " ";
-  }
-  cout << endl;
-
-  for (CFGNode* successor : node->successors) {
-    printCFG(successor, visited);
+    printCFG(extraNode, visited);
   }
 }
 
