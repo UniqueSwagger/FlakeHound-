@@ -130,6 +130,7 @@ void StaticAnalyzer::initializeRiskModel() {
   // Feature order: random, sleep/wait, time, environment, globals, threads,
   // nulls, div-by-zero, array indexing, uninitialized vars, missing returns,
   // branches, loops, CFG nodes, total findings.
+  // ML stuff
   vector<vector<double>> features = {
       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 6, 0},
       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 12, 0},

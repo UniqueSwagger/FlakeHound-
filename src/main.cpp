@@ -409,11 +409,10 @@ CliOptions promptDemoOptions() {
   CliOptions options;
   cout << "\nDemo Analysis Settings\n";
   cout << "Press Enter to keep the default value.\n";
-  options.runs =
-      promptIntValue("How many times should the demo test suite run?", 8, 2, 100);
+  options.runs = promptIntValue(
+      "How many times should the demo test suite run?", 8, 2, 100);
   options.demoConfig.randomPassThreshold = promptIntValue(
-      "From which random value should test_random_number pass? (0-9)", 5, 0,
-      9);
+      "From which random value should test_random_number pass? (0-9)", 5, 0, 9);
   options.demoConfig.timingPassThreshold = promptIntValue(
       "From which time-mod value should test_timing_based pass? (0-9)", 5, 0,
       9);
@@ -483,8 +482,7 @@ int runDynamicDemo(const CliOptions& options) {
 
   cout << "Flakiness Analysis\n\n";
   cout << "Threshold used: coefficient < " << fixed << setprecision(2)
-       << fixedFlakyThreshold
-       << " => mildly_flaky, otherwise highly_flaky\n";
+       << fixedFlakyThreshold << " => mildly_flaky, otherwise highly_flaky\n";
   for (const FlakinessScore& score : scores) {
     cout << score.testName << ": PASSED " << score.passes << "/"
          << score.totalRuns << " times (Category: " << score.category
@@ -566,8 +564,7 @@ int runAbseilAnalysis(int runs, const path& reportPath) {
 
   cout << "Flakiness Summary:\n";
   cout << "Threshold used: coefficient < " << fixed << setprecision(2)
-       << fixedFlakyThreshold
-       << " => mildly_flaky, otherwise highly_flaky\n";
+       << fixedFlakyThreshold << " => mildly_flaky, otherwise highly_flaky\n";
   for (const FlakinessScore& score : scores) {
     cout << "  " << score.testName << ": " << score.passes << "/"
          << score.totalRuns << " (" << score.category << ")\n";
@@ -626,8 +623,8 @@ int runMenu() {
 
     if (choice == "3") {
       int runs = promptAbseilRuns(20);
-      int result =
-          runAbseilAnalysis(runs, path("reports") / "abseil_flakiness_report.txt");
+      int result = runAbseilAnalysis(
+          runs, path("reports") / "abseil_flakiness_report.txt");
       cout << "\n";
       if (result != 0) {
         return result;
@@ -665,6 +662,4 @@ int runMenu() {
   }
 }
 
-int main() {
-  return runMenu();
-}
+int main() { return runMenu(); }
